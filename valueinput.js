@@ -50,6 +50,9 @@ function ValueInput(e) {
   this.valueWrapper = document.createElement('span');
   this.valueWrapper.classList.add('valuewrapper');
 
+  this.label = document.createElement('span');
+  this.valueLabel = document.createElement('span');
+
   this.stringInput = document.createElement('input');
   this.stringInput.type = 'text';
 
@@ -75,10 +78,16 @@ function ValueInput(e) {
   this.objectAddBtn.textContent = '+';
 
   this.value = null;
+  this.collapsed = false;
   this.previousSelectChoice = null;
 
   this.wrapper.appendChild(this.select);
   this.wrapper.appendChild(this.valueWrapper);
+
+  // this.wrapper.addEventListener('mouseover', this.setCollapsed.bind(this, false));
+  // this.wrapper.addEventListener('mouseout', this.setCollapsed.bind(this, true));
+  // this.valueLabel.addEventListener('click', this.setCollapsed.bind(this, false));
+  // this.wrapper.addEventListener('click', this.setCollapsed.bind(this, true));
 
   this.select.addEventListener('change', this.onSelectChange.bind(this));
 
@@ -93,6 +102,7 @@ function ValueInput(e) {
 
   this.onSelectChange();
   this.updateValue();
+  this.setCollapsed(true);
 }
 
 ValueInput.prototype.onSelectChange = function(pEvent) {
@@ -285,4 +295,77 @@ ValueInput.prototype.updateValue = function() {
   if(newValue !== previousValue) {
     this.wrapper.dispatchEvent(this.changeEvent);
   }
+}
+
+ValueInput.prototype.setCollapsed = function(bCollapsed) {
+
+  if(bCollapsed == this.collapsed) {
+    return;
+  }
+
+  if(bCollapsed) {
+
+    var labelText = '';
+    var valueText = '';
+
+    if(this.select.value == 'string') {
+
+      labelText = '';
+      valueText = '"' + this.stringInput.value + '"';
+
+    } else if(this.select.value == 'number') {
+
+      labelText = 'number: ';
+      valueText = this.numberInput.value;
+
+    } else if(this.select.value == 'boolean') {
+
+      labelText = 'boolean: ';
+      valueText = this.booleanInput.checked ? 'true' : 'false';
+
+    } else if(this.select.value == 'array') {
+
+      labelText = '';
+      valueText = '[...]';
+
+    } else if(this.select.value == 'object') {
+
+      labelText = '';
+      valueText = '{...}';
+
+    } else if(this.select.value == 'null') {
+
+      labelText = 'null';
+      valueText = '';
+
+    } else if(this.select.value == 'undefined') {
+
+      labelText = 'undefined';
+      valueText = '';
+    }
+
+    this.label.textContent = labelText;
+    this.valueLabel.textContent = valueText;
+
+    this.wrapper.replaceChild(this.label, this.select);
+    this.wrapper.replaceChild(this.valueLabel, this.valueWrapper);
+
+  } else {
+
+    this.wrapper.replaceChild(this.select, this.label);
+    this.wrapper.replaceChild(this.valueWrapper, this.valueLabel);
+  }
+
+  if(bCollapsed) {
+    this.wrapper.classList.add('collapsed');
+  } else {
+    this.wrapper.classList.remove('collapsed');
+  }
+
+  this.collapsed = bCollapsed;
+}
+
+ValueInput.prototype.toggleCollapsed = function() {
+
+  this.setCollapsed(!this.collapsed);
 }

@@ -54,6 +54,9 @@ function ValueInput(e) {
   this.numberInput = document.createElement('input');
   this.numberInput.type = 'number';
 
+  this.booleanInput = document.createElement('input');
+  this.booleanInput.type = 'checkbox';
+
   this.arrayInputs = [];
 
   this.objectLabelInputs = [];
@@ -69,6 +72,7 @@ function ValueInput(e) {
 
   this.stringInput.addEventListener('input', this.updateValue.bind(this));
   this.numberInput.addEventListener('input', this.updateValue.bind(this));
+  this.booleanInput.addEventListener('change', this.updateValue.bind(this));
 
   this.onSelectChange();
   this.updateValue();
@@ -98,6 +102,8 @@ ValueInput.prototype.unsetInput = function(pChoice) {
 
   } else if(pChoice == 'boolean') {
 
+    this.wrapper.removeChild(this.booleanInput);
+
   } else if(pChoice == 'array') {
 
   } else if(pChoice == 'object') {
@@ -120,6 +126,8 @@ ValueInput.prototype.setupInput = function(pChoice) {
     this.wrapper.appendChild(this.numberInput);
 
   } else if(pChoice == 'boolean') {
+
+    this.wrapper.appendChild(this.booleanInput);
 
   } else if(pChoice == 'array') {
 
@@ -145,6 +153,8 @@ ValueInput.prototype.updateValue = function() {
     value = Number(this.numberInput.value);
 
   } else if(this.select.value == 'boolean') {
+
+    value = Boolean(this.booleanInput.checked);
 
   } else if(this.select.value == 'array') {
 

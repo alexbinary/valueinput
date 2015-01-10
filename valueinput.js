@@ -60,9 +60,13 @@ function ValueInput(e) {
 
   this.objectLabelInputs = [];
   this.objectValueInputs = [];
+  this.objectRemoveBtns = [];
 
-  this.addBtn = document.createElement('button');
-  this.addBtn.textContent = '+';
+  this.arrayAddBtn = document.createElement('button');
+  this.arrayAddBtn.textContent = '+';
+
+  this.objectAddBtn = document.createElement('button');
+  this.objectAddBtn.textContent = '+';
 
   this.value = null;
   this.previousSelectChoice = null;
@@ -75,7 +79,8 @@ function ValueInput(e) {
   this.numberInput.addEventListener('input', this.updateValue.bind(this));
   this.booleanInput.addEventListener('change', this.updateValue.bind(this));
 
-  this.addBtn.addEventListener('click', this.addArrayValue.bind(this));
+  this.arrayAddBtn.addEventListener('click', this.addArrayValue.bind(this));
+  this.objectAddBtn.addEventListener('click', this.addObjectValue.bind(this));
 
   this.changeEvent = new Event('change');
 
@@ -112,12 +117,16 @@ ValueInput.prototype.unsetInput = function(pChoice) {
   } else if(pChoice == 'array') {
 
     for(var i in this.arrayValueInputs) {
-
       this.removeArrayValueInput(this.arrayValueInputs[i], this.arrayRemoveBtns[i]);
     }
-    this.wrapper.removeChild(this.addBtn);
+    this.wrapper.removeChild(this.arrayAddBtn);
 
   } else if(pChoice == 'object') {
+
+    for(var i in this.objectValueInputs) {
+      this.removeObjectValueInput(this.objectLabelInputs[i], this.objectValueInputs[i], this.objectRemoveBtns[i]);
+    }
+    this.wrapper.removeChild(this.objectAddBtn);
 
   } else if(pChoice == 'null') {
 
@@ -143,12 +152,16 @@ ValueInput.prototype.setupInput = function(pChoice) {
   } else if(pChoice == 'array') {
 
     for(var i in this.arrayValueInputs) {
-
       this.insertArrayValueInput(this.arrayValueInputs[i], this.arrayRemoveBtns[i]);
     }
-    this.wrapper.appendChild(this.addBtn);
+    this.wrapper.appendChild(this.arrayAddBtn);
 
   } else if(pChoice == 'object') {
+
+    for(var i in this.objectValueInputs) {
+      this.insertObjectValueInput(this.objectLabelInputs[i], this.objectValueInputs[i], this.objectRemoveBtns[i]);
+    }
+    this.wrapper.appendChild(this.objectAddBtn);
 
   } else if(pChoice == 'null') {
 
@@ -159,24 +172,39 @@ ValueInput.prototype.setupInput = function(pChoice) {
 
 ValueInput.prototype.addArrayValue = function() {
 
-  if(this.select.value == 'array') {
+  var arrayValueInput = new ValueInput();
+  arrayValueInput.wrapper.addEventListener('change', this.updateValue.bind(this));
+  this.arrayValueInputs.push(arrayValueInput);
 
-    var arrayValueInput = new ValueInput();
-    arrayValueInput.wrapper.addEventListener('change', this.updateValue.bind(this));
-    this.arrayValueInputs.push(arrayValueInput);
+  var arrayRemoveBtn = document.createElement('button');
+  arrayRemoveBtn.textContent = '-';
+  arrayRemoveBtn.addEventListener('click', this.removeArrayValue.bind(this, arrayValueInput, arrayRemoveBtn));
+  this.arrayRemoveBtns.push(arrayRemoveBtn);
 
-    var arrayRemoveBtn = document.createElement('button');
-    arrayRemoveBtn.textContent = '-';
-    arrayRemoveBtn.addEventListener('click', this.removeArrayValue.bind(this, arrayValueInput, arrayRemoveBtn));
-    this.arrayRemoveBtns.push(arrayRemoveBtn);
+  this.insertArrayValueInput(arrayValueInput, arrayRemoveBtn);
 
-    this.insertArrayValueInput(arrayValueInput, arrayRemoveBtn);
+  this.updateValue();
+}
 
-    this.updateValue();
+ValueInput.prototype.addObjectValue = function() {
 
-  } else if(this.select.value == 'object') {
+  var objectLabelInput = document.createElement('input');
+  objectLabelInput.type = 'text';
+  objectLabelInput.addEventListener('input', this.updateValue.bind(this));
+  this.objectLabelInputs.push(objectLabelInput);
 
-  }
+  var objectValueInput = new ValueInput();
+  objectValueInput.wrapper.addEventListener('change', this.updateValue.bind(this));
+  this.objectValueInputs.push(objectValueInput);
+
+  var objectRemoveBtn = document.createElement('button');
+  objectRemoveBtn.textContent = '-';
+  objectRemoveBtn.addEventListener('click', this.removeObjectValue.bind(this, objectLabelInput, objectValueInput, objectRemoveBtn));
+  this.objectRemoveBtns.push(objectRemoveBtn);
+
+  this.insertObjectValueInput(objectLabelInput, objectValueInput, objectRemoveBtn);
+
+  this.updateValue();
 }
 
 ValueInput.prototype.removeArrayValue = function(pInput, pButton) {
@@ -192,13 +220,42 @@ ValueInput.prototype.removeArrayValue = function(pInput, pButton) {
   this.updateValue();
 }
 
+ValueInput.prototype.removeObjectValue = function(pLabelInput, pValueInput, pButton) {
+
+  var i = this.objectLabelInputs.indexOf(pLabelInput);
+  if(i != -1) this.objectLabelInputs.splice(i, 1);
+
+  var i = this.objectValueInputs.indexOf(pValueInput);
+  if(i != -1) this.objectValueInputs.splice(i, 1);
+
+  var i = this.objectRemoveBtns.indexOf(pButton);
+  if(i != -1) this.objectRemoveBtns.splice(i, 1);
+
+  this.removeObjectValueInput(pLabelInput, pValueInput, pButton);
+
+  this.updateValue();
+}
+
 ValueInput.prototype.insertArrayValueInput = function(pInput, pButton) {
 
-  if(this.addBtn.parentNode) {
-    this.wrapper.insertBefore(pInput.wrapper, this.addBtn);
-    this.wrapper.insertBefore(pButton, this.addBtn);
+  if(this.arrayAddBtn.parentNode) {
+    this.wrapper.insertBefore(pInput.wrapper, this.arrayAddBtn);
+    this.wrapper.insertBefore(pButton, this.arrayAddBtn);
   } else {
     this.wrapper.appendChild(pInput.wrapper);
+    this.wrapper.appendChild(pButton);
+  }
+}
+
+ValueInput.prototype.insertObjectValueInput = function(pLabelInput, pValueInput, pButton) {
+
+  if(this.objectAddBtn.parentNode) {
+    this.wrapper.insertBefore(pLabelInput, this.objectAddBtn);
+    this.wrapper.insertBefore(pValueInput.wrapper, this.objectAddBtn);
+    this.wrapper.insertBefore(pButton, this.objectAddBtn);
+  } else {
+    this.wrapper.appendChild(pLabelInput);
+    this.wrapper.appendChild(pValueInput.wrapper);
     this.wrapper.appendChild(pButton);
   }
 }
@@ -206,6 +263,13 @@ ValueInput.prototype.insertArrayValueInput = function(pInput, pButton) {
 ValueInput.prototype.removeArrayValueInput = function(pInput, pButton) {
 
   this.wrapper.removeChild(pInput.wrapper);
+  this.wrapper.removeChild(pButton);
+}
+
+ValueInput.prototype.removeObjectValueInput = function(pLabelInput, pValueInput, pButton) {
+
+  this.wrapper.removeChild(pLabelInput);
+  this.wrapper.removeChild(pValueInput.wrapper);
   this.wrapper.removeChild(pButton);
 }
 
@@ -230,11 +294,16 @@ ValueInput.prototype.updateValue = function() {
     newValue = new Array();
 
     for(var i in this.arrayValueInputs) {
-
       newValue.push(this.arrayValueInputs[i].value);
     }
 
   } else if(this.select.value == 'object') {
+
+    newValue = new Object();
+
+    for(var i in this.objectValueInputs) {
+      newValue[this.objectLabelInputs[i].value] = this.objectValueInputs[i].value;
+    }
 
   } else if(this.select.value == 'null') {
 

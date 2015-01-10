@@ -14,8 +14,6 @@
  */
 function ValueInput(e) {
 
-  this.input = e;
-
   this.wrapper = document.createElement('span');
 
   this.select = document.createElement('select');
@@ -57,15 +55,18 @@ function ValueInput(e) {
   this.booleanInput = document.createElement('input');
   this.booleanInput.type = 'checkbox';
 
-  this.arrayInputs = [];
+  this.arrayValueInputs = [];
+  this.arrayRemoveBtns = [];
 
   this.objectLabelInputs = [];
   this.objectValueInputs = [];
 
+  this.addBtn = document.createElement('button');
+  this.addBtn.textContent = '+';
+
   this.value = null;
   this.previousSelectChoice = null;
 
-  this.input.parentElement.replaceChild(this.wrapper, this.input);
   this.wrapper.appendChild(this.select);
 
   this.select.addEventListener('change', this.onSelectChange.bind(this));
@@ -73,6 +74,10 @@ function ValueInput(e) {
   this.stringInput.addEventListener('input', this.updateValue.bind(this));
   this.numberInput.addEventListener('input', this.updateValue.bind(this));
   this.booleanInput.addEventListener('change', this.updateValue.bind(this));
+
+  this.addBtn.addEventListener('click', this.addArrayValue.bind(this));
+
+  this.changeEvent = new Event('change');
 
   this.onSelectChange();
   this.updateValue();
@@ -106,6 +111,12 @@ ValueInput.prototype.unsetInput = function(pChoice) {
 
   } else if(pChoice == 'array') {
 
+    for(var i in this.arrayValueInputs) {
+
+      this.removeArrayValueInput(this.arrayValueInputs[i], this.arrayRemoveBtns[i]);
+    }
+    this.wrapper.removeChild(this.addBtn);
+
   } else if(pChoice == 'object') {
 
   } else if(pChoice == 'null') {
@@ -131,6 +142,12 @@ ValueInput.prototype.setupInput = function(pChoice) {
 
   } else if(pChoice == 'array') {
 
+    for(var i in this.arrayValueInputs) {
+
+      this.insertArrayValueInput(this.arrayValueInputs[i], this.arrayRemoveBtns[i]);
+    }
+    this.wrapper.appendChild(this.addBtn);
+
   } else if(pChoice == 'object') {
 
   } else if(pChoice == 'null') {
@@ -140,34 +157,98 @@ ValueInput.prototype.setupInput = function(pChoice) {
   }
 }
 
+ValueInput.prototype.addArrayValue = function() {
+
+  if(this.select.value == 'array') {
+
+    var arrayValueInput = new ValueInput();
+    arrayValueInput.wrapper.addEventListener('change', this.updateValue.bind(this));
+    this.arrayValueInputs.push(arrayValueInput);
+
+    var arrayRemoveBtn = document.createElement('button');
+    arrayRemoveBtn.textContent = '-';
+    arrayRemoveBtn.addEventListener('click', this.removeArrayValue.bind(this, arrayValueInput, arrayRemoveBtn));
+    this.arrayRemoveBtns.push(arrayRemoveBtn);
+
+    this.insertArrayValueInput(arrayValueInput, arrayRemoveBtn);
+
+    this.updateValue();
+
+  } else if(this.select.value == 'object') {
+
+  }
+}
+
+ValueInput.prototype.removeArrayValue = function(pInput, pButton) {
+
+  var i = this.arrayValueInputs.indexOf(pInput);
+  if(i != -1) this.arrayValueInputs.splice(i, 1);
+
+  var i = this.arrayRemoveBtns.indexOf(pButton);
+  if(i != -1) this.arrayRemoveBtns.splice(i, 1);
+
+  this.removeArrayValueInput(pInput, pButton);
+
+  this.updateValue();
+}
+
+ValueInput.prototype.insertArrayValueInput = function(pInput, pButton) {
+
+  if(this.addBtn.parentNode) {
+    this.wrapper.insertBefore(pInput.wrapper, this.addBtn);
+    this.wrapper.insertBefore(pButton, this.addBtn);
+  } else {
+    this.wrapper.appendChild(pInput.wrapper);
+    this.wrapper.appendChild(pButton);
+  }
+}
+
+ValueInput.prototype.removeArrayValueInput = function(pInput, pButton) {
+
+  this.wrapper.removeChild(pInput.wrapper);
+  this.wrapper.removeChild(pButton);
+}
+
 ValueInput.prototype.updateValue = function() {
 
-  var value = null;
+  var newValue = null;
 
   if(this.select.value == 'string') {
 
-    value = String(this.stringInput.value);
+    newValue = String(this.stringInput.value);
 
   } else if(this.select.value == 'number') {
 
-    value = Number(this.numberInput.value);
+    newValue = Number(this.numberInput.value);
 
   } else if(this.select.value == 'boolean') {
 
-    value = Boolean(this.booleanInput.checked);
+    newValue = Boolean(this.booleanInput.checked);
 
   } else if(this.select.value == 'array') {
+
+    newValue = new Array();
+
+    for(var i in this.arrayValueInputs) {
+
+      newValue.push(this.arrayValueInputs[i].value);
+    }
 
   } else if(this.select.value == 'object') {
 
   } else if(this.select.value == 'null') {
 
-    value = null;
+    newValue = null;
 
   } else if(this.select.value == 'undefined') {
 
-    value = undefined;
+    newValue = undefined;
   }
 
-  this.value = value;
+  var previousValue = this.value;
+  this.value = newValue;
+
+  if(newValue !== previousValue) {
+    this.wrapper.dispatchEvent(this.changeEvent);
+  }
 }

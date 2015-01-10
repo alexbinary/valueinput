@@ -76,11 +76,12 @@ function ValueInput(e) {
 
 ValueInput.prototype.onSelectChange = function(pEvent) {
 
-  this.unsetInput(this.previousSelectChoice);
-
   var newSelectChoice = this.select.value;
 
+  this.unsetInput(this.previousSelectChoice);
   this.setupInput(newSelectChoice);
+
+  this.updateValue();
 
   this.previousSelectChoice = newSelectChoice;
 }
@@ -151,8 +152,11 @@ ValueInput.prototype.updateValue = function() {
 
   } else if(this.select.value == 'null') {
 
+    value = null;
+
   } else if(this.select.value == 'undefined') {
 
+    value = undefined;
   }
 
   this.value = value;

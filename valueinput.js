@@ -50,7 +50,6 @@ function ValueInput(e) {
   this.valueWrapper = document.createElement('span');
   this.valueWrapper.classList.add('valuewrapper');
 
-  this.label = document.createElement('span');
   this.valueLabel = document.createElement('span');
 
   this.stringInput = document.createElement('input');
@@ -77,10 +76,15 @@ function ValueInput(e) {
   this.objectAddBtn = document.createElement('button');
   this.objectAddBtn.textContent = '+';
 
-  this.value = null;
+  this.collapseBtn = document.createElement('button');
+  this.collapseBtn.textContent = '';
+
+  this.value = undefined;
+  this.valueText = undefined;
   this.collapsed = false;
   this.previousSelectChoice = null;
 
+  this.wrapper.appendChild(this.collapseBtn);
   this.wrapper.appendChild(this.select);
   this.wrapper.appendChild(this.valueWrapper);
 
@@ -97,6 +101,8 @@ function ValueInput(e) {
 
   this.arrayAddBtn.addEventListener('click', this.addArrayValue.bind(this));
   this.objectAddBtn.addEventListener('click', this.addObjectValue.bind(this));
+
+  this.collapseBtn.addEventListener('click', this.toggleCollapsed.bind(this));
 
   this.changeEvent = new Event('change');
 
@@ -250,7 +256,9 @@ ValueInput.prototype.removeObjectValue = function(pLabelInput, pValueInput, pLis
 
 ValueInput.prototype.updateValue = function() {
 
-  var newValue = null;
+  // compute new value
+
+  var newValue = undefined;
 
   if(this.select.value == 'string') {
 
@@ -289,10 +297,66 @@ ValueInput.prototype.updateValue = function() {
     newValue = undefined;
   }
 
-  var previousValue = this.value;
-  this.value = newValue;
+  // if value has changed, update value and valueText
 
-  if(newValue !== previousValue) {
+  if(newValue !== this.value) {
+
+    this.value = newValue;
+
+    var newValueText = undefined;
+
+    if(this.select.value == 'string') {
+
+      newValueText = '"' + this.stringInput.value + '"';
+
+    } else if(this.select.value == 'number') {
+
+      newValueText = this.numberInput.value;
+
+    } else if(this.select.value == 'boolean') {
+
+      newValueText = this.booleanInput.checked ? 'true' : 'false';
+
+    } else if(this.select.value == 'array') {
+
+      newValueText = '[';
+
+      for(i in this.arrayValueInputs) {
+
+        if(i != 0) {
+          newValueText += ', ';
+        }
+        newValueText += this.arrayValueInputs[i].valueText;
+      }
+
+      newValueText += ']';
+
+    } else if(this.select.value == 'object') {
+
+      newValueText = '{';
+
+      for(i in this.objectValueInputs) {
+
+        if(i != 0) {
+          newValueText += ', ';
+        }
+        newValueText += '"' + this.objectLabelInputs[i].value + '": ' + this.objectValueInputs[i].valueText;
+      }
+
+      newValueText += '}';
+
+    } else if(this.select.value == 'null') {
+
+      newValueText = 'null';
+
+    } else if(this.select.value == 'undefined') {
+
+      newValueText = 'undefined';
+    }
+
+    this.valueText = newValueText;
+    this.valueLabel.textContent = this.valueText;
+
     this.wrapper.dispatchEvent(this.changeEvent);
   }
 }
@@ -305,55 +369,13 @@ ValueInput.prototype.setCollapsed = function(bCollapsed) {
 
   if(bCollapsed) {
 
-    var labelText = '';
-    var valueText = '';
-
-    if(this.select.value == 'string') {
-
-      labelText = '';
-      valueText = '"' + this.stringInput.value + '"';
-
-    } else if(this.select.value == 'number') {
-
-      labelText = 'number: ';
-      valueText = this.numberInput.value;
-
-    } else if(this.select.value == 'boolean') {
-
-      labelText = 'boolean: ';
-      valueText = this.booleanInput.checked ? 'true' : 'false';
-
-    } else if(this.select.value == 'array') {
-
-      labelText = '';
-      valueText = '[...]';
-
-    } else if(this.select.value == 'object') {
-
-      labelText = '';
-      valueText = '{...}';
-
-    } else if(this.select.value == 'null') {
-
-      labelText = 'null';
-      valueText = '';
-
-    } else if(this.select.value == 'undefined') {
-
-      labelText = 'undefined';
-      valueText = '';
-    }
-
-    this.label.textContent = labelText;
-    this.valueLabel.textContent = valueText;
-
-    this.wrapper.replaceChild(this.label, this.select);
+    this.wrapper.removeChild(this.select);
     this.wrapper.replaceChild(this.valueLabel, this.valueWrapper);
 
   } else {
 
-    this.wrapper.replaceChild(this.select, this.label);
     this.wrapper.replaceChild(this.valueWrapper, this.valueLabel);
+    this.wrapper.insertBefore(this.select, this.valueWrapper);
   }
 
   if(bCollapsed) {

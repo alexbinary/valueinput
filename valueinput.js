@@ -237,7 +237,7 @@ ValueInput.prototype.removeArrayValue = function(pInput, pListItem) {
   var i = this.arrayValueInputs.indexOf(pInput);
   if(i != -1) this.arrayValueInputs.splice(i, 1);
 
-  this.valueWrapper.removeChild(pListItem);
+  this.arrayListElement.removeChild(pListItem);
 
   this.updateValue();
 }
@@ -250,7 +250,7 @@ ValueInput.prototype.removeObjectValue = function(pLabelInput, pValueInput, pLis
   var i = this.objectValueInputs.indexOf(pValueInput);
   if(i != -1) this.objectValueInputs.splice(i, 1);
 
-  this.valueWrapper.removeChild(pListItem);
+  this.objectListElement.removeChild(pListItem);
 
   this.updateValue();
 }

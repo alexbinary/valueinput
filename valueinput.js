@@ -198,8 +198,8 @@ ValueInput.prototype.addArrayValue = function() {
 
   this.arrayValueInputs.push(arrayValueInput);
 
-  listItem.appendChild(arrayValueInput.wrapper);
   listItem.appendChild(arrayRemoveBtn);
+  listItem.appendChild(arrayValueInput.wrapper);
   this.arrayListElement.appendChild(listItem);
 
   this.updateValue();
@@ -223,9 +223,10 @@ ValueInput.prototype.addObjectValue = function() {
   this.objectLabelInputs.push(objectLabelInput);
   this.objectValueInputs.push(objectValueInput);
 
-  listItem.appendChild(objectLabelInput);
-  listItem.appendChild(objectValueInput.wrapper);
   listItem.appendChild(objectRemoveBtn);
+  listItem.appendChild(objectLabelInput);
+  listItem.appendChild(document.createTextNode(':'));
+  listItem.appendChild(objectValueInput.wrapper);
   this.objectListElement.appendChild(listItem);
 
   this.updateValue();

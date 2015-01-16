@@ -17,6 +17,9 @@ function ValueInput(e) {
   this.wrapper = document.createElement('span');
   this.wrapper.classList.add('valueinput');
 
+  this.innerWrapper = document.createElement('span');
+  this.innerWrapper.classList.add('innerwrapper');
+
   this.select = document.createElement('select');
   var optElement = document.createElement('option');
   optElement.value = 'string';
@@ -78,15 +81,17 @@ function ValueInput(e) {
 
   this.collapseBtn = document.createElement('button');
   this.collapseBtn.textContent = '';
+  this.collapseBtn.classList.add('collapsebtn');
 
   this.value = undefined;
   this.valueText = undefined;
   this.collapsed = false;
   this.previousSelectChoice = null;
 
-  this.wrapper.appendChild(this.collapseBtn);
-  this.wrapper.appendChild(this.select);
-  this.wrapper.appendChild(this.valueWrapper);
+  this.wrapper.appendChild(this.innerWrapper);
+  this.innerWrapper.appendChild(this.collapseBtn);
+  this.innerWrapper.appendChild(this.select);
+  this.innerWrapper.appendChild(this.valueWrapper);
 
   // this.wrapper.addEventListener('mouseover', this.setCollapsed.bind(this, false));
   // this.wrapper.addEventListener('mouseout', this.setCollapsed.bind(this, true));
@@ -370,13 +375,13 @@ ValueInput.prototype.setCollapsed = function(bCollapsed) {
 
   if(bCollapsed) {
 
-    this.wrapper.removeChild(this.select);
-    this.wrapper.replaceChild(this.valueLabel, this.valueWrapper);
+    this.innerWrapper.removeChild(this.select);
+    this.innerWrapper.replaceChild(this.valueLabel, this.valueWrapper);
 
   } else {
 
-    this.wrapper.replaceChild(this.valueWrapper, this.valueLabel);
-    this.wrapper.insertBefore(this.select, this.valueWrapper);
+    this.innerWrapper.replaceChild(this.valueWrapper, this.valueLabel);
+    this.innerWrapper.insertBefore(this.select, this.valueWrapper);
   }
 
   if(bCollapsed) {

@@ -5,6 +5,33 @@
  * jan. 2015
  */
 
+ /* current DOM tree :
+  *
+  *   Collapsed :
+  *
+  *   span.valueinput.collapsed
+  *     span.innerwrapper
+  *       button.collapsebtn
+  *       span
+  *
+  *   Not Collapsed :
+  *
+  *   span.valueinput
+  *     span.innerwrapper
+  *       button
+  *       select
+  *       span.valuewrapper
+  *
+  *   Value wrapper for type array :
+  *
+  *   span.valuewrapper
+  *     ul
+  *       li
+  *         button
+  *         span.inputvalue
+  *     button
+  */
+
 "use strict";
 
 /**
@@ -12,7 +39,7 @@
  *
  * constructor
  */
-function ValueInput(e) {
+function ValueInput(pValue) {
 
   this.wrapper = document.createElement('span');
   this.wrapper.classList.add('valueinput');
@@ -20,35 +47,35 @@ function ValueInput(e) {
   this.innerWrapper = document.createElement('span');
   this.innerWrapper.classList.add('innerwrapper');
 
-  this.select = document.createElement('select');
+  this.valueTypeSelect = document.createElement('select');
   var optElement = document.createElement('option');
   optElement.value = 'string';
   optElement.label = 'string';
-  this.select.add(optElement);
+  this.valueTypeSelect.add(optElement);
   var optElement = document.createElement('option');
   optElement.value = 'number';
   optElement.label = 'number';
-  this.select.add(optElement);
+  this.valueTypeSelect.add(optElement);
   var optElement = document.createElement('option');
   optElement.value = 'boolean';
   optElement.label = 'boolean';
-  this.select.add(optElement);
+  this.valueTypeSelect.add(optElement);
   var optElement = document.createElement('option');
   optElement.value = 'array';
   optElement.label = 'array';
-  this.select.add(optElement);
+  this.valueTypeSelect.add(optElement);
   var optElement = document.createElement('option');
   optElement.value = 'object';
   optElement.label = 'object';
-  this.select.add(optElement);
+  this.valueTypeSelect.add(optElement);
   var optElement = document.createElement('option');
   optElement.value = 'null';
   optElement.label = 'null';
-  this.select.add(optElement);
+  this.valueTypeSelect.add(optElement);
   var optElement = document.createElement('option');
   optElement.value = 'undefined';
   optElement.label = 'undefined';
-  this.select.add(optElement);
+  this.valueTypeSelect.add(optElement);
 
   this.valueWrapper = document.createElement('span');
   this.valueWrapper.classList.add('valuewrapper');
@@ -75,9 +102,11 @@ function ValueInput(e) {
 
   this.arrayAddBtn = document.createElement('button');
   this.arrayAddBtn.textContent = '+';
+  this.arrayAddBtn.classList.add('addbtn');
 
   this.objectAddBtn = document.createElement('button');
   this.objectAddBtn.textContent = '+';
+  this.objectAddBtn.classList.add('addbtn');
 
   this.collapseBtn = document.createElement('button');
   this.collapseBtn.textContent = '';
@@ -86,11 +115,11 @@ function ValueInput(e) {
   this.value = undefined;
   this.valueText = undefined;
   this.collapsed = false;
-  this.previousSelectChoice = null;
+  this.previousValueType = null;
 
   this.wrapper.appendChild(this.innerWrapper);
   this.innerWrapper.appendChild(this.collapseBtn);
-  this.innerWrapper.appendChild(this.select);
+  this.innerWrapper.appendChild(this.valueTypeSelect);
   this.innerWrapper.appendChild(this.valueWrapper);
 
   // this.wrapper.addEventListener('mouseover', this.setCollapsed.bind(this, false));
@@ -98,7 +127,7 @@ function ValueInput(e) {
   // this.valueLabel.addEventListener('click', this.setCollapsed.bind(this, false));
   // this.wrapper.addEventListener('click', this.setCollapsed.bind(this, true));
 
-  this.select.addEventListener('change', this.onSelectChange.bind(this));
+  this.valueTypeSelect.addEventListener('change', this.onValueTypeSelectChange.bind(this));
 
   this.stringInput.addEventListener('input', this.updateValue.bind(this));
   this.numberInput.addEventListener('input', this.updateValue.bind(this));
@@ -111,24 +140,25 @@ function ValueInput(e) {
 
   this.changeEvent = new Event('change');
 
-  this.onSelectChange();
-  this.updateValue();
+  this.setValue(pValue);
   this.setCollapsed(true);
 }
 
-ValueInput.prototype.onSelectChange = function(pEvent) {
+ValueInput.prototype.onValueTypeSelectChange = function(pEvent) {
 
-  var newSelectChoice = this.select.value;
+  console.log('onSelectChange');
 
-  this.unsetInput(this.previousSelectChoice);
-  this.setupInput(newSelectChoice);
+  var pNewValueType = this.valueTypeSelect.value;
+
+  this.unsetValueInput(this.previousValueType);
+  this.setupValueInput(pNewValueType);
 
   this.updateValue();
 
-  this.previousSelectChoice = newSelectChoice;
+  this.previousValueType = pNewValueType;
 }
 
-ValueInput.prototype.unsetInput = function(pChoice) {
+ValueInput.prototype.unsetValueInput = function(pChoice) {
 
   if(pChoice == 'string') {
 
@@ -159,7 +189,7 @@ ValueInput.prototype.unsetInput = function(pChoice) {
   }
 }
 
-ValueInput.prototype.setupInput = function(pChoice) {
+ValueInput.prototype.setupValueInput = function(pChoice) {
 
   if(pChoice == 'string') {
 
@@ -190,15 +220,16 @@ ValueInput.prototype.setupInput = function(pChoice) {
   }
 }
 
-ValueInput.prototype.addArrayValue = function() {
+ValueInput.prototype.addArrayValue = function(pValue) {
 
   var listItem = document.createElement('li');
 
-  var arrayValueInput = new ValueInput();
+  var arrayValueInput = new ValueInput(pValue);
   arrayValueInput.wrapper.addEventListener('change', this.updateValue.bind(this));
 
   var arrayRemoveBtn = document.createElement('button');
   arrayRemoveBtn.textContent = '-';
+  arrayRemoveBtn.classList.add('removebtn');
   arrayRemoveBtn.addEventListener('click', this.removeArrayValue.bind(this, arrayValueInput, listItem));
 
   this.arrayValueInputs.push(arrayValueInput);
@@ -210,19 +241,21 @@ ValueInput.prototype.addArrayValue = function() {
   this.updateValue();
 }
 
-ValueInput.prototype.addObjectValue = function() {
+ValueInput.prototype.addObjectValue = function(pLabel, pValue) {
 
   var listItem = document.createElement('li');
 
   var objectLabelInput = document.createElement('input');
   objectLabelInput.type = 'text';
+  objectLabelInput.value = pLabel;
   objectLabelInput.addEventListener('input', this.updateValue.bind(this));
 
-  var objectValueInput = new ValueInput();
+  var objectValueInput = new ValueInput(pValue);
   objectValueInput.wrapper.addEventListener('change', this.updateValue.bind(this));
 
   var objectRemoveBtn = document.createElement('button');
   objectRemoveBtn.textContent = '-';
+  objectRemoveBtn.classList.add('removebtn');
   objectRemoveBtn.addEventListener('click', this.removeObjectValue.bind(this, objectLabelInput, objectValueInput, listItem));
 
   this.objectLabelInputs.push(objectLabelInput);
@@ -266,19 +299,19 @@ ValueInput.prototype.updateValue = function() {
 
   var newValue = undefined;
 
-  if(this.select.value == 'string') {
+  if(this.valueTypeSelect.value == 'string') {
 
     newValue = String(this.stringInput.value);
 
-  } else if(this.select.value == 'number') {
+  } else if(this.valueTypeSelect.value == 'number') {
 
     newValue = Number(this.numberInput.value);
 
-  } else if(this.select.value == 'boolean') {
+  } else if(this.valueTypeSelect.value == 'boolean') {
 
     newValue = Boolean(this.booleanInput.checked);
 
-  } else if(this.select.value == 'array') {
+  } else if(this.valueTypeSelect.value == 'array') {
 
     newValue = new Array();
 
@@ -286,7 +319,7 @@ ValueInput.prototype.updateValue = function() {
       newValue.push(this.arrayValueInputs[i].value);
     }
 
-  } else if(this.select.value == 'object') {
+  } else if(this.valueTypeSelect.value == 'object') {
 
     newValue = new Object();
 
@@ -294,11 +327,11 @@ ValueInput.prototype.updateValue = function() {
       newValue[this.objectLabelInputs[i].value] = this.objectValueInputs[i].value;
     }
 
-  } else if(this.select.value == 'null') {
+  } else if(this.valueTypeSelect.value == 'null') {
 
     newValue = null;
 
-  } else if(this.select.value == 'undefined') {
+  } else if(this.valueTypeSelect.value == 'undefined') {
 
     newValue = undefined;
   }
@@ -311,19 +344,19 @@ ValueInput.prototype.updateValue = function() {
 
     var newValueText = undefined;
 
-    if(this.select.value == 'string') {
+    if(this.valueTypeSelect.value == 'string') {
 
       newValueText = '"' + this.stringInput.value + '"';
 
-    } else if(this.select.value == 'number') {
+    } else if(this.valueTypeSelect.value == 'number') {
 
       newValueText = this.numberInput.value;
 
-    } else if(this.select.value == 'boolean') {
+    } else if(this.valueTypeSelect.value == 'boolean') {
 
       newValueText = this.booleanInput.checked ? 'true' : 'false';
 
-    } else if(this.select.value == 'array') {
+    } else if(this.valueTypeSelect.value == 'array') {
 
       newValueText = '[';
 
@@ -337,7 +370,7 @@ ValueInput.prototype.updateValue = function() {
 
       newValueText += ']';
 
-    } else if(this.select.value == 'object') {
+    } else if(this.valueTypeSelect.value == 'object') {
 
       newValueText = '{';
 
@@ -351,11 +384,11 @@ ValueInput.prototype.updateValue = function() {
 
       newValueText += '}';
 
-    } else if(this.select.value == 'null') {
+    } else if(this.valueTypeSelect.value == 'null') {
 
       newValueText = 'null';
 
-    } else if(this.select.value == 'undefined') {
+    } else if(this.valueTypeSelect.value == 'undefined') {
 
       newValueText = 'undefined';
     }
@@ -367,6 +400,74 @@ ValueInput.prototype.updateValue = function() {
   }
 }
 
+ValueInput.prototype.setValueType = function(pNewValueType) {
+
+  this.valueTypeSelect.value = pNewValueType;
+  this.onValueTypeSelectChange();
+}
+
+ValueInput.prototype.setValue = function(pValue) {
+
+  // value     typeof
+  //
+  // string    string
+  // number    number
+  // boolean   boolean
+  // array     object
+  // object    object
+  // null      object
+  // undefined undefined
+
+  var valueType = null;
+
+  if(pValue === null) {
+
+    valueType = 'null';
+
+  } else if(pValue === undefined) {
+
+    valueType = 'undefined';
+
+  } else if(typeof pValue == 'string') {
+
+    valueType = 'string';
+    this.stringInput.value = pValue;
+
+  } else if(typeof pValue == 'number') {
+
+    valueType = 'number';
+    this.numberInput.value = pValue;
+
+  } else if(typeof pValue == 'boolean') {
+
+    valueType = 'boolean';
+    this.booleanInput.checked = pValue;
+
+  } else if(Array.isArray(pValue)) {
+
+    valueType = 'array';
+
+    while(this.arrayListElement.hasChildNodes()) {
+      this.arrayListElement.removeChild(this.arrayListElement.lastChild);
+    }
+    this.arrayValueInputs = [];
+
+    for(var i in pValue) {
+      this.addArrayValue(pValue[i]);
+    }
+
+  } else if(typeof pValue == 'object') {
+
+    valueType = 'object';
+
+    for(var i in pValue) {
+      this.addObjectValue(i, pValue[i]);
+    }
+  }
+
+  this.setValueType(valueType);
+}
+
 ValueInput.prototype.setCollapsed = function(bCollapsed) {
 
   if(bCollapsed == this.collapsed) {
@@ -375,13 +476,13 @@ ValueInput.prototype.setCollapsed = function(bCollapsed) {
 
   if(bCollapsed) {
 
-    this.innerWrapper.removeChild(this.select);
+    this.innerWrapper.removeChild(this.valueTypeSelect);
     this.innerWrapper.replaceChild(this.valueLabel, this.valueWrapper);
 
   } else {
 
     this.innerWrapper.replaceChild(this.valueWrapper, this.valueLabel);
-    this.innerWrapper.insertBefore(this.select, this.valueWrapper);
+    this.innerWrapper.insertBefore(this.valueTypeSelect, this.valueWrapper);
   }
 
   if(bCollapsed) {

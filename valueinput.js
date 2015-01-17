@@ -5,32 +5,32 @@
  * jan. 2015
  */
 
- /* current DOM tree :
-  *
-  *   Collapsed :
-  *
-  *   span.valueinput.collapsed
-  *     span.innerwrapper
-  *       button.collapsebtn
-  *       span
-  *
-  *   Not Collapsed :
-  *
-  *   span.valueinput
-  *     span.innerwrapper
-  *       button
-  *       select
-  *       span.valuewrapper
-  *
-  *   Value wrapper for type array :
-  *
-  *   span.valuewrapper
-  *     ul
-  *       li
-  *         button
-  *         span.inputvalue
-  *     button
-  */
+/* current DOM tree :
+ *
+ *   Collapsed :
+ *
+ *   span.valueinput.collapsed
+ *     span.innerwrapper
+ *       button.collapsebtn
+ *       span
+ *
+ *   Not Collapsed :
+ *
+ *   span.valueinput
+ *     span.innerwrapper
+ *       button
+ *       select
+ *       span.valuewrapper
+ *
+ *   Value wrapper for type array :
+ *
+ *   span.valuewrapper
+ *     ul
+ *       li
+ *         button
+ *         span.inputvalue
+ *     button
+ */
 
 "use strict";
 
@@ -38,8 +38,26 @@
  * ValueInput
  *
  * constructor
+ *
+ * @param {any} pValue - initial value of the input
  */
 function ValueInput(pValue) {
+
+  this.initDOM();
+
+  this.value     = undefined;
+  this.valueText = undefined;
+  this.previousValueType = null;
+  this.collapsed         = false;
+
+  this.setValue(pValue);
+  this.setCollapsed(true);
+}
+
+/**
+ * ValueInput - prepare DOM tree
+ */
+ValueInput.prototype.initDOM = function() {
 
   this.wrapper = document.createElement('span');
   this.wrapper.classList.add('valueinput');
@@ -47,40 +65,43 @@ function ValueInput(pValue) {
   this.innerWrapper = document.createElement('span');
   this.innerWrapper.classList.add('innerwrapper');
 
-  this.valueTypeSelect = document.createElement('select');
-  var optElement = document.createElement('option');
-  optElement.value = 'string';
-  optElement.label = 'string';
-  this.valueTypeSelect.add(optElement);
-  var optElement = document.createElement('option');
-  optElement.value = 'number';
-  optElement.label = 'number';
-  this.valueTypeSelect.add(optElement);
-  var optElement = document.createElement('option');
-  optElement.value = 'boolean';
-  optElement.label = 'boolean';
-  this.valueTypeSelect.add(optElement);
-  var optElement = document.createElement('option');
-  optElement.value = 'array';
-  optElement.label = 'array';
-  this.valueTypeSelect.add(optElement);
-  var optElement = document.createElement('option');
-  optElement.value = 'object';
-  optElement.label = 'object';
-  this.valueTypeSelect.add(optElement);
-  var optElement = document.createElement('option');
-  optElement.value = 'null';
-  optElement.label = 'null';
-  this.valueTypeSelect.add(optElement);
-  var optElement = document.createElement('option');
-  optElement.value = 'undefined';
-  optElement.label = 'undefined';
-  this.valueTypeSelect.add(optElement);
+  this.collapseBtn = document.createElement('button');
+  this.collapseBtn.textContent = '';
+  this.collapseBtn.classList.add('collapsebtn');
 
   this.valueWrapper = document.createElement('span');
   this.valueWrapper.classList.add('valuewrapper');
 
   this.valueLabel = document.createElement('span');
+
+  this.initValueTypeSelect();
+  this.initValueInputs();
+
+  this.initEvents();
+  this.buildDOMTree();
+}
+
+/**
+ * ValueInput - create SELECT element for value type selection
+ */
+ValueInput.prototype.initValueTypeSelect = function() {
+
+  this.valueTypeSelect = document.createElement('select');
+
+  var types = ['string', 'number', 'boolean', 'array', 'object', 'null', 'undefined'];
+  for(var i in types) {
+
+    var optElement = document.createElement('option');
+    optElement.value = types[i];
+    optElement.label = types[i];
+    this.valueTypeSelect.add(optElement);
+  }
+}
+
+/**
+ * ValueInput - create elements related to data input
+ */
+ValueInput.prototype.initValueInputs = function() {
 
   this.stringInput = document.createElement('input');
   this.stringInput.type = 'text';
@@ -92,13 +113,7 @@ function ValueInput(pValue) {
   this.booleanInput.type = 'checkbox';
 
   this.arrayListElement = document.createElement('ul');
-
-  this.arrayValueInputs = [];
-
   this.objectListElement = document.createElement('ul');
-
-  this.objectLabelInputs = [];
-  this.objectValueInputs = [];
 
   this.arrayAddBtn = document.createElement('button');
   this.arrayAddBtn.textContent = '+';
@@ -108,20 +123,18 @@ function ValueInput(pValue) {
   this.objectAddBtn.textContent = '+';
   this.objectAddBtn.classList.add('addbtn');
 
-  this.collapseBtn = document.createElement('button');
-  this.collapseBtn.textContent = '';
-  this.collapseBtn.classList.add('collapsebtn');
+  this.arrayValueInputs = [];
 
-  this.value = undefined;
-  this.valueText = undefined;
-  this.collapsed = false;
-  this.previousValueType = null;
+  this.objectLabelInputs = [];
+  this.objectValueInputs = [];
+}
 
-  this.wrapper.appendChild(this.innerWrapper);
-  this.innerWrapper.appendChild(this.collapseBtn);
-  this.innerWrapper.appendChild(this.valueTypeSelect);
-  this.innerWrapper.appendChild(this.valueWrapper);
+/**
+ * ValueInput - connect events to handlers
+ */
+ValueInput.prototype.initEvents = function() {
 
+  this.collapseBtn.addEventListener('click', this.toggleCollapsed.bind(this));
   // this.wrapper.addEventListener('mouseover', this.setCollapsed.bind(this, false));
   // this.wrapper.addEventListener('mouseout', this.setCollapsed.bind(this, true));
   // this.valueLabel.addEventListener('click', this.setCollapsed.bind(this, false));
@@ -133,93 +146,106 @@ function ValueInput(pValue) {
   this.numberInput.addEventListener('input', this.updateValue.bind(this));
   this.booleanInput.addEventListener('change', this.updateValue.bind(this));
 
-  this.arrayAddBtn.addEventListener('click', this.addArrayValue.bind(this));
-  this.objectAddBtn.addEventListener('click', this.addObjectValue.bind(this));
+  this.arrayAddBtn.addEventListener('click', this.addArrayValue.bind(this, null));
+  this.objectAddBtn.addEventListener('click', this.addObjectValue.bind(this, null, null));
 
-  this.collapseBtn.addEventListener('click', this.toggleCollapsed.bind(this));
-
-  this.changeEvent = new Event('change');
-
-  this.setValue(pValue);
-  this.setCollapsed(true);
+  this.changeEvent = new Event('change'); // this event is sent to inform listeners that the value has changed
 }
 
+/**
+ * ValueInput - assembles main DOM elements
+ */
+ValueInput.prototype.buildDOMTree = function() {
+
+  this.wrapper.appendChild(this.innerWrapper);
+  this.innerWrapper.appendChild(this.collapseBtn);
+  this.innerWrapper.appendChild(this.valueTypeSelect);
+  this.innerWrapper.appendChild(this.valueWrapper);
+}
+
+/**
+ * ValueInput - new data type has been selected
+ */
 ValueInput.prototype.onValueTypeSelectChange = function(pEvent) {
 
-  console.log('onSelectChange');
-
-  var pNewValueType = this.valueTypeSelect.value;
+  var newValueType = this.valueTypeSelect.value;
 
   this.unsetValueInput(this.previousValueType);
-  this.setupValueInput(pNewValueType);
+  this.setupValueInput(newValueType);
 
   this.updateValue();
 
-  this.previousValueType = pNewValueType;
+  this.previousValueType = newValueType;
 }
 
-ValueInput.prototype.unsetValueInput = function(pChoice) {
+/**
+ * ValueInput - remove inputs related to given data type from DOM tree
+ */
+ValueInput.prototype.unsetValueInput = function(pValueType) {
 
-  if(pChoice == 'string') {
+  if(pValueType == 'string') {
 
     this.valueWrapper.removeChild(this.stringInput);
 
-  } else if(pChoice == 'number') {
+  } else if(pValueType == 'number') {
 
     this.valueWrapper.removeChild(this.numberInput);
 
-  } else if(pChoice == 'boolean') {
+  } else if(pValueType == 'boolean') {
 
     this.valueWrapper.removeChild(this.booleanInput);
 
-  } else if(pChoice == 'array') {
+  } else if(pValueType == 'array') {
 
     this.valueWrapper.removeChild(this.arrayListElement);
     this.valueWrapper.removeChild(this.arrayAddBtn);
 
-  } else if(pChoice == 'object') {
+  } else if(pValueType == 'object') {
 
     this.valueWrapper.removeChild(this.objectListElement);
     this.valueWrapper.removeChild(this.objectAddBtn);
 
-  } else if(pChoice == 'null') {
-
-  } else if(pChoice == 'undefined') {
-
   }
+  // null and undefined do not have inputs
 }
 
-ValueInput.prototype.setupValueInput = function(pChoice) {
+/**
+ * ValueInput - insert inputs related to given data type into DOM tree
+ */
+ValueInput.prototype.setupValueInput = function(pValueType) {
 
-  if(pChoice == 'string') {
+  if(pValueType == 'string') {
 
     this.valueWrapper.appendChild(this.stringInput);
 
-  } else if(pChoice == 'number') {
+  } else if(pValueType == 'number') {
 
     this.valueWrapper.appendChild(this.numberInput);
 
-  } else if(pChoice == 'boolean') {
+  } else if(pValueType == 'boolean') {
 
     this.valueWrapper.appendChild(this.booleanInput);
 
-  } else if(pChoice == 'array') {
+  } else if(pValueType == 'array') {
 
     this.valueWrapper.appendChild(this.arrayListElement);
     this.valueWrapper.appendChild(this.arrayAddBtn);
 
-  } else if(pChoice == 'object') {
+  } else if(pValueType == 'object') {
 
     this.valueWrapper.appendChild(this.objectListElement);
     this.valueWrapper.appendChild(this.objectAddBtn);
 
-  } else if(pChoice == 'null') {
-
-  } else if(pChoice == 'undefined') {
-
   }
+  // null and undefined do not have inputs
 }
 
+/**
+ * ValueInput - add a value for the array data type
+ *              creates, configure and add DOM elements
+ *
+ * @param {any} pValue - value to add
+ */
 ValueInput.prototype.addArrayValue = function(pValue) {
 
   var listItem = document.createElement('li');
@@ -232,15 +258,21 @@ ValueInput.prototype.addArrayValue = function(pValue) {
   arrayRemoveBtn.classList.add('removebtn');
   arrayRemoveBtn.addEventListener('click', this.removeArrayValue.bind(this, arrayValueInput, listItem));
 
-  this.arrayValueInputs.push(arrayValueInput);
-
   listItem.appendChild(arrayRemoveBtn);
   listItem.appendChild(arrayValueInput.wrapper);
   this.arrayListElement.appendChild(listItem);
 
+  this.arrayValueInputs.push(arrayValueInput);
+
   this.updateValue();
 }
 
+/**
+ * ValueInput - add a value for the object data type
+ *              creates, configure and add DOM elements
+ *
+ * @param {any} pValue - value to add
+ */
 ValueInput.prototype.addObjectValue = function(pLabel, pValue) {
 
   var listItem = document.createElement('li');
@@ -258,29 +290,72 @@ ValueInput.prototype.addObjectValue = function(pLabel, pValue) {
   objectRemoveBtn.classList.add('removebtn');
   objectRemoveBtn.addEventListener('click', this.removeObjectValue.bind(this, objectLabelInput, objectValueInput, listItem));
 
-  this.objectLabelInputs.push(objectLabelInput);
-  this.objectValueInputs.push(objectValueInput);
-
   listItem.appendChild(objectRemoveBtn);
   listItem.appendChild(objectLabelInput);
   listItem.appendChild(document.createTextNode(':'));
   listItem.appendChild(objectValueInput.wrapper);
   this.objectListElement.appendChild(listItem);
 
+  this.objectLabelInputs.push(objectLabelInput);
+  this.objectValueInputs.push(objectValueInput);
+
   this.updateValue();
 }
 
+/**
+ * ValueInput - set values for array data type
+ *
+ * @param {array} pValues - values to set
+ */
+ValueInput.prototype.setArrayValues = function(pValues) {
+
+  this.clearArrayValues();
+
+  for(var i in pValues) {
+    this.addArrayValue(pValues[i]);
+  }
+}
+
+/**
+ * ValueInput - set values for object data type
+ *
+ * @param {object} pValues - values to set with correspondings labels
+ */
+ValueInput.prototype.setObjectValues = function(pValues) {
+
+  this.clearObjectValues();
+
+  for(var i in pValues) {
+    this.addObjectValue(i, pValues[i]);
+  }
+}
+
+/**
+ * ValueInput - remove elements related to a value for the array data type
+ *
+ * @param {any} pInput    - corresponding element for value input
+ * @param {any} pListItem - corresponding top level wrapper element
+ */
 ValueInput.prototype.removeArrayValue = function(pInput, pListItem) {
+
+  this.arrayListElement.removeChild(pListItem);
 
   var i = this.arrayValueInputs.indexOf(pInput);
   if(i != -1) this.arrayValueInputs.splice(i, 1);
 
-  this.arrayListElement.removeChild(pListItem);
-
   this.updateValue();
 }
 
+/**
+ * ValueInput - remove elements related to a value for the object data type
+ *
+ * @param {any} pLabelInput - corresponding element for label input
+ * @param {any} pValueInput - corresponding element for value input
+ * @param {any} pListItem   - corresponding top level wrapper element
+ */
 ValueInput.prototype.removeObjectValue = function(pLabelInput, pValueInput, pListItem) {
+
+  this.objectListElement.removeChild(pListItem);
 
   var i = this.objectLabelInputs.indexOf(pLabelInput);
   if(i != -1) this.objectLabelInputs.splice(i, 1);
@@ -288,135 +363,49 @@ ValueInput.prototype.removeObjectValue = function(pLabelInput, pValueInput, pLis
   var i = this.objectValueInputs.indexOf(pValueInput);
   if(i != -1) this.objectValueInputs.splice(i, 1);
 
-  this.objectListElement.removeChild(pListItem);
-
   this.updateValue();
 }
 
-ValueInput.prototype.updateValue = function() {
+/**
+ * ValueInput - remove all elements related to all values for the array data type
+ */
+ValueInput.prototype.clearArrayValues = function() {
 
-  // compute new value
-
-  var newValue = undefined;
-
-  if(this.valueTypeSelect.value == 'string') {
-
-    newValue = String(this.stringInput.value);
-
-  } else if(this.valueTypeSelect.value == 'number') {
-
-    newValue = Number(this.numberInput.value);
-
-  } else if(this.valueTypeSelect.value == 'boolean') {
-
-    newValue = Boolean(this.booleanInput.checked);
-
-  } else if(this.valueTypeSelect.value == 'array') {
-
-    newValue = new Array();
-
-    for(var i in this.arrayValueInputs) {
-      newValue.push(this.arrayValueInputs[i].value);
-    }
-
-  } else if(this.valueTypeSelect.value == 'object') {
-
-    newValue = new Object();
-
-    for(var i in this.objectValueInputs) {
-      newValue[this.objectLabelInputs[i].value] = this.objectValueInputs[i].value;
-    }
-
-  } else if(this.valueTypeSelect.value == 'null') {
-
-    newValue = null;
-
-  } else if(this.valueTypeSelect.value == 'undefined') {
-
-    newValue = undefined;
+  while(this.arrayListElement.hasChildNodes()) {
+    this.arrayListElement.removeChild(this.arrayListElement.lastChild);
   }
-
-  // if value has changed, update value and valueText
-
-  if(newValue !== this.value) {
-
-    this.value = newValue;
-
-    var newValueText = undefined;
-
-    if(this.valueTypeSelect.value == 'string') {
-
-      newValueText = '"' + this.stringInput.value + '"';
-
-    } else if(this.valueTypeSelect.value == 'number') {
-
-      newValueText = this.numberInput.value;
-
-    } else if(this.valueTypeSelect.value == 'boolean') {
-
-      newValueText = this.booleanInput.checked ? 'true' : 'false';
-
-    } else if(this.valueTypeSelect.value == 'array') {
-
-      newValueText = '[';
-
-      for(i in this.arrayValueInputs) {
-
-        if(i != 0) {
-          newValueText += ', ';
-        }
-        newValueText += this.arrayValueInputs[i].valueText;
-      }
-
-      newValueText += ']';
-
-    } else if(this.valueTypeSelect.value == 'object') {
-
-      newValueText = '{';
-
-      for(i in this.objectValueInputs) {
-
-        if(i != 0) {
-          newValueText += ', ';
-        }
-        newValueText += '"' + this.objectLabelInputs[i].value + '": ' + this.objectValueInputs[i].valueText;
-      }
-
-      newValueText += '}';
-
-    } else if(this.valueTypeSelect.value == 'null') {
-
-      newValueText = 'null';
-
-    } else if(this.valueTypeSelect.value == 'undefined') {
-
-      newValueText = 'undefined';
-    }
-
-    this.valueText = newValueText;
-    this.valueLabel.textContent = this.valueText;
-
-    this.wrapper.dispatchEvent(this.changeEvent);
-  }
+  this.arrayValueInputs = [];
 }
 
-ValueInput.prototype.setValueType = function(pNewValueType) {
+/**
+ * ValueInput - remove all elements related to all values for the object data type
+ */
+ValueInput.prototype.clearObjectValues = function() {
 
-  this.valueTypeSelect.value = pNewValueType;
+  while(this.objectListElement.hasChildNodes()) {
+    this.objectListElement.removeChild(this.objectListElement.lastChild);
+  }
+  this.objectLabelInputs = [];
+  this.objectValueInputs = [];
+}
+
+/**
+ * ValueInput - set the value data type
+ *
+ * @param {string} pValueType - new value data type
+ */
+ValueInput.prototype.setValueType = function(pValueType) {
+
+  this.valueTypeSelect.value = pValueType;
   this.onValueTypeSelectChange();
 }
 
+/**
+ * ValueInput - set the value
+ *
+ * @param {string} pValue - new value data type
+ */
 ValueInput.prototype.setValue = function(pValue) {
-
-  // value     typeof
-  //
-  // string    string
-  // number    number
-  // boolean   boolean
-  // array     object
-  // object    object
-  // null      object
-  // undefined undefined
 
   var valueType = null;
 
@@ -446,28 +435,137 @@ ValueInput.prototype.setValue = function(pValue) {
   } else if(Array.isArray(pValue)) {
 
     valueType = 'array';
-
-    while(this.arrayListElement.hasChildNodes()) {
-      this.arrayListElement.removeChild(this.arrayListElement.lastChild);
-    }
-    this.arrayValueInputs = [];
-
-    for(var i in pValue) {
-      this.addArrayValue(pValue[i]);
-    }
+    this.setArrayValues(pValue);
 
   } else if(typeof pValue == 'object') {
 
     valueType = 'object';
-
-    for(var i in pValue) {
-      this.addObjectValue(i, pValue[i]);
-    }
+    this.setObjectValues(pValue);
   }
 
   this.setValueType(valueType);
 }
 
+/**
+ * ValueInput - update inner state to reflect new data value
+ */
+ValueInput.prototype.updateValue = function() {
+
+  var valueType = this.valueTypeSelect.value
+  var value     = undefined;
+
+  if(valueType == 'string') {
+
+    value = String(this.stringInput.value);
+
+  } else if(valueType == 'number') {
+
+    value = Number(this.numberInput.value);
+
+  } else if(valueType == 'boolean') {
+
+    value = Boolean(this.booleanInput.checked);
+
+  } else if(valueType == 'array') {
+
+    value = [];
+
+    for(var i in this.arrayValueInputs) {
+      value.push(this.arrayValueInputs[i].value);
+    }
+
+  } else if(valueType == 'object') {
+
+    value = {};
+
+    for(var i in this.objectValueInputs) {
+      value[this.objectLabelInputs[i].value] = this.objectValueInputs[i].value;
+    }
+
+  } else if(valueType == 'null') {
+
+    value = null;
+
+  } else if(valueType == 'undefined') {
+
+    value = undefined;
+  }
+
+  if(value !== this.value) {
+
+    this.value = value;
+
+    this.updateValueText();
+    this.wrapper.dispatchEvent(this.changeEvent);
+  }
+}
+
+/**
+ * ValueInput - update value text label
+ */
+ValueInput.prototype.updateValueText = function() {
+
+  var valueType = this.valueTypeSelect.value;
+  var valueText = undefined;
+
+  if(valueType == 'string') {
+
+    valueText = '"' + this.stringInput.value + '"';
+
+  } else if(valueType == 'number') {
+
+    valueText = this.numberInput.value;
+
+  } else if(valueType == 'boolean') {
+
+    valueText = this.booleanInput.checked ? 'true' : 'false';
+
+  } else if(valueType == 'array') {
+
+    valueText = '[';
+
+    for(var i in this.arrayValueInputs) {
+
+      if(i != 0) {
+        valueText += ', ';
+      }
+      valueText += this.arrayValueInputs[i].valueText;
+    }
+
+    valueText += ']';
+
+  } else if(valueType == 'object') {
+
+    valueText = '{';
+
+    for(var i in this.objectValueInputs) {
+
+      if(i != 0) {
+        valueText += ', ';
+      }
+      valueText += '"' + this.objectLabelInputs[i].value + '": ' + this.objectValueInputs[i].valueText;
+    }
+
+    valueText += '}';
+
+  } else if(valueType == 'null') {
+
+    valueText = 'null';
+
+  } else if(valueType == 'undefined') {
+
+    valueText = 'undefined';
+  }
+
+  this.valueText = valueText;
+  this.valueLabel.textContent = this.valueText;
+}
+
+/**
+ * ValueInput - set Collapsed state
+ *
+ * @param {boolean} bCollapsed - callapsed state
+ */
 ValueInput.prototype.setCollapsed = function(bCollapsed) {
 
   if(bCollapsed == this.collapsed) {
@@ -494,6 +592,9 @@ ValueInput.prototype.setCollapsed = function(bCollapsed) {
   this.collapsed = bCollapsed;
 }
 
+/**
+ * ValueInput - toggle Collapsed state
+ */
 ValueInput.prototype.toggleCollapsed = function() {
 
   this.setCollapsed(!this.collapsed);

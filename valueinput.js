@@ -22,12 +22,14 @@
  *       select
  *       span.valuewrapper
  *
- *   Value wrapper for type array :
+ *   Value wrapper for type object :
  *
  *   span.valuewrapper
  *     ul
  *       li
  *         button
+ *         input
+ *         text ":"
  *         span.inputvalue
  *     button
  */

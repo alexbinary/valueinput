@@ -274,6 +274,8 @@ ValueInput.prototype.setupValueInput = function(pValueType) {
 ValueInput.prototype.addArrayValue = function(pValue) {
 
   var listItem = document.createElement('li');
+  var labelWrapper = document.createElement('span');
+  labelWrapper.classList.add('labelwrapper');
 
   var arrayValueInput = new ValueInput(pValue);
   arrayValueInput.wrapper.addEventListener('valuechange', this.onArrayValueChanged.bind(this, listItem));
@@ -284,7 +286,8 @@ ValueInput.prototype.addArrayValue = function(pValue) {
   arrayRemoveBtn.classList.add('removebtn');
   arrayRemoveBtn.addEventListener('click', this.removeArrayValue.bind(this, arrayValueInput, listItem));
 
-  listItem.appendChild(arrayRemoveBtn);
+  labelWrapper.appendChild(arrayRemoveBtn);
+  listItem.appendChild(labelWrapper);
   listItem.appendChild(arrayValueInput.wrapper);
   this.arrayListElement.appendChild(listItem);
 
@@ -302,6 +305,8 @@ ValueInput.prototype.addArrayValue = function(pValue) {
 ValueInput.prototype.addObjectValue = function(pLabel, pValue) {
 
   var listItem = document.createElement('li');
+  var labelWrapper = document.createElement('span');
+  labelWrapper.classList.add('labelwrapper');
 
   var objectLabelInput = document.createElement('input');
   objectLabelInput.type = 'text';
@@ -317,9 +322,10 @@ ValueInput.prototype.addObjectValue = function(pLabel, pValue) {
   objectRemoveBtn.classList.add('removebtn');
   objectRemoveBtn.addEventListener('click', this.removeObjectValue.bind(this, objectLabelInput, objectValueInput, listItem));
 
-  listItem.appendChild(objectRemoveBtn);
-  listItem.appendChild(objectLabelInput);
-  listItem.appendChild(document.createTextNode(':'));
+  labelWrapper.appendChild(objectRemoveBtn);
+  labelWrapper.appendChild(objectLabelInput);
+  labelWrapper.appendChild(document.createTextNode(':'));
+  listItem.appendChild(labelWrapper);
   listItem.appendChild(objectValueInput.wrapper);
   this.objectListElement.appendChild(listItem);
 

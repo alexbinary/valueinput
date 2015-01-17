@@ -276,6 +276,7 @@ ValueInput.prototype.addArrayValue = function(pValue) {
   var listItem = document.createElement('li');
 
   var arrayValueInput = new ValueInput(pValue);
+  arrayValueInput.wrapper.addEventListener('valuechange', this.onArrayValueChanged.bind(this, listItem));
   arrayValueInput.wrapper.addEventListener('valuechange', this.updateValue.bind(this));
 
   var arrayRemoveBtn = document.createElement('button');
@@ -289,7 +290,7 @@ ValueInput.prototype.addArrayValue = function(pValue) {
 
   this.arrayValueInputs.push(arrayValueInput);
 
-  this.updateValue();
+  arrayValueInput.forceUpdate();
 }
 
 /**
@@ -308,6 +309,7 @@ ValueInput.prototype.addObjectValue = function(pLabel, pValue) {
   objectLabelInput.addEventListener('input', this.updateValue.bind(this));
 
   var objectValueInput = new ValueInput(pValue);
+  objectValueInput.wrapper.addEventListener('valuechange', this.onObjectValueChanged.bind(this, listItem));
   objectValueInput.wrapper.addEventListener('valuechange', this.updateValue.bind(this));
 
   var objectRemoveBtn = document.createElement('button');
@@ -324,7 +326,7 @@ ValueInput.prototype.addObjectValue = function(pLabel, pValue) {
   this.objectLabelInputs.push(objectLabelInput);
   this.objectValueInputs.push(objectValueInput);
 
-  this.updateValue();
+  objectValueInput.forceUpdate();
 }
 
 /**
@@ -415,6 +417,40 @@ ValueInput.prototype.clearObjectValues = function() {
 }
 
 /**
+ * ValueInput - process the change of an array value
+ *
+ * @param {any}   pListItem - top level wrapper element associated with the changed value
+ * @param {Event} pEvent    - 'valuechange' event
+ */
+ValueInput.prototype.onArrayValueChanged = function(pListItem, pEvent) {
+
+  var oldValueType = this.getValueType(pEvent.oldValue);
+  var newValueType = this.getValueType(pEvent.newValue);
+
+  if(newValueType != oldValueType) {
+    pListItem.classList.remove('datatype-' + oldValueType);
+  }
+  pListItem.classList.add('datatype-' + newValueType);
+}
+
+/**
+ * ValueInput - process the change of an object value
+ *
+ * @param {any}   pListItem - top level wrapper element associated with the changed value
+ * @param {Event} pEvent    - 'valuechange' event
+ */
+ValueInput.prototype.onObjectValueChanged = function(pListItem, pEvent) {
+
+  var oldValueType = this.getValueType(pEvent.oldValue);
+  var newValueType = this.getValueType(pEvent.newValue);
+
+  if(newValueType != oldValueType) {
+    pListItem.classList.remove('datatype-' + oldValueType);
+  }
+  pListItem.classList.add('datatype-' + newValueType);
+}
+
+/**
  * ValueInput - set the value data type
  *
  * @param {string} pValueType - new value data type
@@ -432,39 +468,26 @@ ValueInput.prototype.setValueType = function(pValueType) {
  */
 ValueInput.prototype.setValue = function(pValue) {
 
-  var valueType = null;
+  var valueType = this.getValueType(pValue);
 
-  if(pValue === null) {
+  if(valueType == 'string') {
 
-    valueType = 'null';
-
-  } else if(pValue === undefined) {
-
-    valueType = 'undefined';
-
-  } else if(typeof pValue == 'string') {
-
-    valueType = 'string';
     this.stringInput.value = pValue;
 
-  } else if(typeof pValue == 'number') {
+  } else if(valueType == 'number') {
 
-    valueType = 'number';
     this.numberInput.value = pValue;
 
-  } else if(typeof pValue == 'boolean') {
+  } else if(valueType == 'boolean') {
 
-    valueType = 'boolean';
     this.booleanInput.checked = pValue;
 
-  } else if(Array.isArray(pValue)) {
+  } else if(valueType == 'array') {
 
-    valueType = 'array';
     this.setArrayValues(pValue);
 
-  } else if(typeof pValue == 'object') {
+  } else if(valueType == 'object') {
 
-    valueType = 'object';
     this.setObjectValues(pValue);
   }
 
@@ -592,6 +615,17 @@ ValueInput.prototype.updateValueText = function() {
 }
 
 /**
+ * ValueInput - force value update
+ *              send `valuechange` event even if not needed
+ */
+ValueInput.prototype.forceUpdate = function() {
+
+  this.changeEvent.oldValue = this.value;
+  this.changeEvent.newValue = this.value;
+  this.wrapper.dispatchEvent(this.changeEvent);
+}
+
+/**
  * ValueInput - set Collapsed state
  *
  * @param {boolean} bCollapsed - callapsed state
@@ -637,4 +671,45 @@ ValueInput.prototype.setCollapsed = function(bCollapsed) {
 ValueInput.prototype.toggleCollapsed = function() {
 
   this.setCollapsed(!this.collapsed);
+}
+
+/**
+ * ValueInput - return value type identifier for given value
+ *
+ * @param {any} pValue - value to get the value type of
+ */
+ValueInput.prototype.getValueType = function(pValue) {
+
+  var valueType = undefined;
+
+  if(pValue === null) {
+
+    valueType = 'null';
+
+  } else if(pValue === undefined) {
+
+    valueType = 'undefined';
+
+  } else if(typeof pValue == 'string') {
+
+    valueType = 'string';
+
+  } else if(typeof pValue == 'number') {
+
+    valueType = 'number';
+
+  } else if(typeof pValue == 'boolean') {
+
+    valueType = 'boolean';
+
+  } else if(Array.isArray(pValue)) {
+
+    valueType = 'array';
+
+  } else if(typeof pValue == 'object') {
+
+    valueType = 'object';
+  }
+
+  return valueType;
 }

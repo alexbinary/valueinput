@@ -152,7 +152,7 @@ ValueInput.prototype.initEvents = function() {
   this.arrayAddBtn.addEventListener('click', this.addArrayValue.bind(this, null));
   this.objectAddBtn.addEventListener('click', this.addObjectValue.bind(this, null, null));
 
-  this.changeEvent = new Event('change'); // this event is sent to inform listeners that the value has changed
+  this.changeEvent = new Event('valuechange'); // this event is sent to inform listeners that the value has changed
 }
 
 /**
@@ -276,7 +276,7 @@ ValueInput.prototype.addArrayValue = function(pValue) {
   var listItem = document.createElement('li');
 
   var arrayValueInput = new ValueInput(pValue);
-  arrayValueInput.wrapper.addEventListener('change', this.updateValue.bind(this));
+  arrayValueInput.wrapper.addEventListener('valuechange', this.updateValue.bind(this));
 
   var arrayRemoveBtn = document.createElement('button');
   arrayRemoveBtn.textContent = '-';
@@ -308,7 +308,7 @@ ValueInput.prototype.addObjectValue = function(pLabel, pValue) {
   objectLabelInput.addEventListener('input', this.updateValue.bind(this));
 
   var objectValueInput = new ValueInput(pValue);
-  objectValueInput.wrapper.addEventListener('change', this.updateValue.bind(this));
+  objectValueInput.wrapper.addEventListener('valuechange', this.updateValue.bind(this));
 
   var objectRemoveBtn = document.createElement('button');
   objectRemoveBtn.textContent = '-';
@@ -518,10 +518,14 @@ ValueInput.prototype.updateValue = function() {
 
   if(value !== this.value || !this.valueInitialized) {
 
+    var previousValue = this.value;
     this.value = value;
     this.updateValueText();
 
     this.valueInitialized = true;
+
+    this.changeEvent.oldValue = previousValue;
+    this.changeEvent.newValue = this.value;
     this.wrapper.dispatchEvent(this.changeEvent);
   }
 }

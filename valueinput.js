@@ -186,27 +186,38 @@ ValueInput.prototype.unsetValueInput = function(pValueType) {
   if(pValueType == 'string') {
 
     this.valueWrapper.removeChild(this.stringInput);
+    this.wrapper.classList.remove('datatype-string');
 
   } else if(pValueType == 'number') {
 
     this.valueWrapper.removeChild(this.numberInput);
+    this.wrapper.classList.remove('datatype-number');
 
   } else if(pValueType == 'boolean') {
 
     this.valueWrapper.removeChild(this.booleanInput);
+    this.wrapper.classList.remove('datatype-boolean');
 
   } else if(pValueType == 'array') {
 
     this.valueWrapper.removeChild(this.arrayListElement);
     this.valueWrapper.removeChild(this.arrayAddBtn);
+    this.wrapper.classList.remove('datatype-array');
 
   } else if(pValueType == 'object') {
 
     this.valueWrapper.removeChild(this.objectListElement);
     this.valueWrapper.removeChild(this.objectAddBtn);
+    this.wrapper.classList.remove('datatype-object');
 
+  } else if(pValueType == 'null') {
+
+    this.wrapper.classList.remove('datatype-null');
+
+  } else if(pValueType == 'undefined') {
+
+    this.wrapper.classList.remove('datatype-undefined');
   }
-  // null and undefined do not have inputs
 }
 
 /**
@@ -217,27 +228,38 @@ ValueInput.prototype.setupValueInput = function(pValueType) {
   if(pValueType == 'string') {
 
     this.valueWrapper.appendChild(this.stringInput);
+    this.wrapper.classList.add('datatype-string');
 
   } else if(pValueType == 'number') {
 
     this.valueWrapper.appendChild(this.numberInput);
+    this.wrapper.classList.add('datatype-number');
 
   } else if(pValueType == 'boolean') {
 
     this.valueWrapper.appendChild(this.booleanInput);
+    this.wrapper.classList.add('datatype-boolean');
 
   } else if(pValueType == 'array') {
 
     this.valueWrapper.appendChild(this.arrayListElement);
     this.valueWrapper.appendChild(this.arrayAddBtn);
+    this.wrapper.classList.add('datatype-array');
 
   } else if(pValueType == 'object') {
 
     this.valueWrapper.appendChild(this.objectListElement);
     this.valueWrapper.appendChild(this.objectAddBtn);
+    this.wrapper.classList.add('datatype-object');
 
+  } else if(pValueType == 'null') {
+
+    this.wrapper.classList.add('datatype-null');
+
+  } else if(pValueType == 'undefined') {
+
+    this.wrapper.classList.add('datatype-undefined');
   }
-  // null and undefined do not have inputs
 }
 
 /**

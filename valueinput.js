@@ -49,6 +49,7 @@ function ValueInput(pValue, pCollapsed) {
   this.valueText         = undefined;
   this.collapsed         = undefined;
   this.previousValueType = undefined;
+  this.valueInitialized  = false;
 
   this.setValue(pValue);
   this.setCollapsed(pCollapsed);
@@ -513,11 +514,12 @@ ValueInput.prototype.updateValue = function() {
     value = undefined;
   }
 
-  if(value !== this.value) {
+  if(value !== this.value || !this.valueInitialized) {
 
     this.value = value;
-
     this.updateValueText();
+
+    this.valueInitialized = true;
     this.wrapper.dispatchEvent(this.changeEvent);
   }
 }

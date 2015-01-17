@@ -41,17 +41,17 @@
  *
  * @param {any} pValue - initial value of the input
  */
-function ValueInput(pValue) {
+function ValueInput(pValue, pCollapsed) {
 
   this.initDOM();
 
-  this.value     = undefined;
-  this.valueText = undefined;
-  this.previousValueType = null;
-  this.collapsed         = false;
+  this.value             = undefined;
+  this.valueText         = undefined;
+  this.collapsed         = undefined;
+  this.previousValueType = undefined;
 
   this.setValue(pValue);
-  this.setCollapsed(true);
+  this.setCollapsed(pCollapsed);
 }
 
 /**
@@ -597,11 +597,20 @@ ValueInput.prototype.setCollapsed = function(bCollapsed) {
   if(bCollapsed) {
 
     this.innerWrapper.removeChild(this.valueTypeSelect);
-    this.innerWrapper.replaceChild(this.valueLabel, this.valueWrapper);
+
+    if(this.valueWrapper.parentNode) {
+      this.innerWrapper.replaceChild(this.valueLabel, this.valueWrapper);
+    } else {
+      this.innerWrapper.appendChild(this.valueLabel);
+    }
 
   } else {
 
-    this.innerWrapper.replaceChild(this.valueWrapper, this.valueLabel);
+    if(this.valueLabel.parentNode) {
+      this.innerWrapper.replaceChild(this.valueWrapper, this.valueLabel);
+    } else {
+      this.innerWrapper.appendChild(this.valueWrapper);
+    }
     this.innerWrapper.insertBefore(this.valueTypeSelect, this.valueWrapper);
   }
 
@@ -611,7 +620,7 @@ ValueInput.prototype.setCollapsed = function(bCollapsed) {
     this.wrapper.classList.remove('collapsed');
   }
 
-  this.collapsed = bCollapsed;
+  this.collapsed = Boolean(bCollapsed);
 }
 
 /**

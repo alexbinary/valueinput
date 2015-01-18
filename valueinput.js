@@ -27,10 +27,11 @@
  *   span.valuewrapper
  *     ul
  *       li
- *         button
- *         input
- *         text ":"
- *         span.inputvalue
+ *         span.labelwrapper
+ *            button
+ *            input
+ *            text ":"
+ *         span.valueinput
  *     button
  */
 

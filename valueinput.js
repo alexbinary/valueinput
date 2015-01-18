@@ -41,9 +41,10 @@
  *
  * constructor
  *
- * @param {any} pValue - initial value of the input
+ * @param {dictionary} 'value'     - initial value of the input, defaults to `undefined`
+ *                     'collapsed' - initial collapsed state,    defaults to `true`
  */
-function ValueInput(pValue, pCollapsed) {
+function ValueInput() {
 
   this.initDOM();
 
@@ -53,8 +54,22 @@ function ValueInput(pValue, pCollapsed) {
   this.previousValueType = undefined;
   this.valueInitialized  = false;
 
-  this.setValue(pValue);
-  this.setCollapsed(pCollapsed);
+  var initialValue    = undefined;
+  var initialCollapse =      true;
+
+  if(arguments.length > 0) {
+    if(typeof arguments[0] == 'object') {
+      if('value' in arguments[0]) {
+        initialValue = arguments[0]['value'];
+      }
+      if('collapsed' in arguments[0]) {
+        initialCollapse = arguments[0]['collapsed'];
+      }
+    }
+  }
+
+  this.setValue(initialValue);
+  this.setCollapsed(initialCollapse);
 }
 
 /**
@@ -277,7 +292,7 @@ ValueInput.prototype.addArrayValue = function(pValue) {
   var labelWrapper = document.createElement('span');
   labelWrapper.classList.add('labelwrapper');
 
-  var arrayValueInput = new ValueInput(pValue);
+  var arrayValueInput = new ValueInput({value: pValue, collapsed: false});
   arrayValueInput.wrapper.addEventListener('valuechange', this.onArrayValueChanged.bind(this, listItem));
   arrayValueInput.wrapper.addEventListener('valuechange', this.updateValue.bind(this));
 
@@ -313,7 +328,7 @@ ValueInput.prototype.addObjectValue = function(pLabel, pValue) {
   objectLabelInput.value = pLabel;
   objectLabelInput.addEventListener('input', this.updateValue.bind(this));
 
-  var objectValueInput = new ValueInput(pValue);
+  var objectValueInput = new ValueInput({value: pValue, collapsed: false});
   objectValueInput.wrapper.addEventListener('valuechange', this.onObjectValueChanged.bind(this, listItem));
   objectValueInput.wrapper.addEventListener('valuechange', this.updateValue.bind(this));
 

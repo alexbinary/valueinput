@@ -42,35 +42,87 @@
  *
  * constructor
  *
- * @param {dictionary} 'value'     - initial value of the input, defaults to `undefined`
- *                     'collapsed' - initial collapsed state,    defaults to `true`
+ * @param {dictionary} value     {any}        - initial value of the input, defaults to `undefined`
+ *                     collapsed {boolean}    - initial collapsed state,    defaults to `true`
+ *                     datatypes {dictionary} - allowed datatypes
+ *                                              keys must be 'string', 'number', 'boolean', 'array', 'object', 'null', 'undefined'
+ *                                              associated values must be `true` or `false`
+ *                                              associated values for keys 'array' and 'object' can be a new dictionary with same structure (unlimited nested structure)
+ *                                              value `true` for keys 'array' and 'object' means all datatypes are accepted
+ *                                              if none of the possible keys are present, all are allowed
  */
-function ValueInput() {
+function ValueInput(pParams) {
 
-  this.initDOM();
+  var initialValue    = undefined;
+  var initialCollapse =      true;
+  var dataTypes       =        {};
 
+  if(typeof pParams == 'object') {
+    if('value' in pParams) {
+      initialValue = pParams['value'];
+    }
+    if('collapsed' in pParams) {
+      initialCollapse = pParams['collapsed'];
+    }
+    if('datatypes' in pParams) {
+      dataTypes = pParams['datatypes'];
+    }
+  }
+
+  this.dataTypes         = undefined;
+  this.arrayDataTypes    = undefined;
+  this.objectDataTypes   = undefined;
   this.value             = undefined;
   this.valueText         = undefined;
   this.collapsed         = undefined;
   this.previousValueType = undefined;
   this.valueInitialized  = false;
 
-  var initialValue    = undefined;
-  var initialCollapse =      true;
-
-  if(arguments.length > 0) {
-    if(typeof arguments[0] == 'object') {
-      if('value' in arguments[0]) {
-        initialValue = arguments[0]['value'];
-      }
-      if('collapsed' in arguments[0]) {
-        initialCollapse = arguments[0]['collapsed'];
-      }
-    }
-  }
+  this.prepareDataTypes(dataTypes);
+  this.initDOM();
 
   this.setValue(initialValue);
   this.setCollapsed(initialCollapse);
+}
+
+/**
+ * ValueInput - prepare data types definition object
+ */
+ValueInput.prototype.prepareDataTypes = function(pDataTypes) {
+
+  var dataTypes       = [];
+  var arrayDataTypes  = {};
+  var objectDataTypes = {};
+
+  var types = ['string', 'number', 'boolean', 'array', 'object', 'null', 'undefined'];
+
+  var allmissing = true;
+  for(var i in types) {
+    if(types[i] in pDataTypes) {
+      allmissing = false;
+      break;
+    }
+  }
+  for(var i in types) {
+    if((types[i] in pDataTypes && pDataTypes[types[i]]) || allmissing) {
+      dataTypes.push(types[i]);
+    }
+  }
+
+  if('array' in pDataTypes) {
+    if(typeof pDataTypes['array'] == 'object' && pDataTypes['array']) {
+      arrayDataTypes = pDataTypes['array'];
+    }
+  }
+  if('object' in pDataTypes) {
+    if(typeof pDataTypes['object'] == 'object' && pDataTypes['object']) {
+      arrayDataTypes = pDataTypes['object'];
+    }
+  }
+
+  this.dataTypes       = dataTypes;
+  this.arrayDataTypes  = arrayDataTypes;
+  this.objectDataTypes = objectDataTypes;
 }
 
 /**
@@ -107,7 +159,7 @@ ValueInput.prototype.initValueTypeSelect = function() {
 
   this.valueTypeSelect = document.createElement('select');
 
-  var types = ['string', 'number', 'boolean', 'array', 'object', 'null', 'undefined'];
+  var types = this.dataTypes;
   for(var i in types) {
 
     var optElement = document.createElement('option');
@@ -293,7 +345,7 @@ ValueInput.prototype.addArrayValue = function(pValue) {
   var labelWrapper = document.createElement('span');
   labelWrapper.classList.add('labelwrapper');
 
-  var arrayValueInput = new ValueInput({value: pValue, collapsed: false});
+  var arrayValueInput = new ValueInput({value: pValue, collapsed: false, datatypes:this.arrayDataTypes});
   arrayValueInput.wrapper.addEventListener('valuechange', this.onArrayValueChanged.bind(this, listItem));
   arrayValueInput.wrapper.addEventListener('valuechange', this.updateValue.bind(this));
 
@@ -329,7 +381,7 @@ ValueInput.prototype.addObjectValue = function(pLabel, pValue) {
   objectLabelInput.value = pLabel;
   objectLabelInput.addEventListener('input', this.updateValue.bind(this));
 
-  var objectValueInput = new ValueInput({value: pValue, collapsed: false});
+  var objectValueInput = new ValueInput({value: pValue, collapsed: false, datatypes:this.objectDataTypes});
   objectValueInput.wrapper.addEventListener('valuechange', this.onObjectValueChanged.bind(this, listItem));
   objectValueInput.wrapper.addEventListener('valuechange', this.updateValue.bind(this));
 

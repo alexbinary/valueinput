@@ -786,3 +786,24 @@ ValueInput.prototype.getValueType = function(pValue) {
 
   return valueType;
 }
+
+/**
+ * ValueInput - replace given element by current value input
+ *              keep element's classes and id
+ *
+ * @param {DOMElement} pElement - element to replace
+ */
+ValueInput.prototype.replace = function(pElement) {
+
+  if(pElement) {
+    pElement.parentNode.replaceChild(this.wrapper, pElement);
+
+    for(var i=0 ; i<pElement.classList.length ; i++) {
+      this.wrapper.classList.add(pElement.classList.item(i));
+    }
+
+    if(pElement.id) {
+      this.wrapper.id = pElement.id;
+    }
+  }
+}

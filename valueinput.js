@@ -42,14 +42,17 @@
  *
  * constructor
  *
- * @param {dictionary} value     {any}        - initial value of the input, defaults to `undefined`
- *                     collapsed {boolean}    - initial collapsed state,    defaults to `true`
- *                     datatypes {dictionary} - allowed datatypes
- *                                              keys must be 'string', 'number', 'boolean', 'array', 'object', 'null', 'undefined'
- *                                              associated values must be `true` or `false`
- *                                              associated values for keys 'array' and 'object' can be a new dictionary with same structure (unlimited nested structure)
- *                                              value `true` for keys 'array' and 'object' means all datatypes are accepted
- *                                              if none of the possible keys are present, all are allowed
+ * @param {dictionary} pParams - parameters, see below
+ *
+ * pParams: value    : {any}        - initial value of the input, defaults to `undefined`
+ *          collapsed: {boolean}    - initial collapsed state,    defaults to `true`
+ *          datatypes: {dictionary} - allowed datatypes, see below
+ *
+ * datatypes: keys must be 'string', 'number', 'boolean', 'array', 'object', 'null', or 'undefined'
+ *            values will be evaluated as boolean, truthy value means datatype is allowed
+ *            values for keys 'array' and 'object' can be a dictionary with this same structure (recursive definition)
+ *            value `true` for keys 'array' and 'object' means all datatypes are accepted
+ *            if none of the possible keys are present, all are allowed
  */
 function ValueInput(pParams) {
 
@@ -126,7 +129,7 @@ ValueInput.prototype.prepareDataTypes = function(pDataTypes) {
 }
 
 /**
- * ValueInput - prepare DOM tree
+ * ValueInput - init DOM elements
  */
 ValueInput.prototype.initDOM = function() {
 
@@ -206,10 +209,6 @@ ValueInput.prototype.initValueInputs = function() {
 ValueInput.prototype.initEvents = function() {
 
   this.collapseBtn.addEventListener('click', this.toggleCollapsed.bind(this));
-  // this.wrapper.addEventListener('mouseover', this.setCollapsed.bind(this, false));
-  // this.wrapper.addEventListener('mouseout', this.setCollapsed.bind(this, true));
-  // this.valueLabel.addEventListener('click', this.setCollapsed.bind(this, false));
-  // this.wrapper.addEventListener('click', this.setCollapsed.bind(this, true));
 
   this.valueTypeSelect.addEventListener('change', this.onValueTypeSelectChange.bind(this));
 
@@ -250,7 +249,7 @@ ValueInput.prototype.onValueTypeSelectChange = function(pEvent) {
 }
 
 /**
- * ValueInput - remove inputs related to given data type from DOM tree
+ * ValueInput - remove input elements related to given data type from DOM tree
  */
 ValueInput.prototype.unsetValueInput = function(pValueType) {
 
@@ -292,7 +291,7 @@ ValueInput.prototype.unsetValueInput = function(pValueType) {
 }
 
 /**
- * ValueInput - insert inputs related to given data type into DOM tree
+ * ValueInput - insert input elements related to given data type into DOM tree
  */
 ValueInput.prototype.setupValueInput = function(pValueType) {
 
@@ -335,13 +334,14 @@ ValueInput.prototype.setupValueInput = function(pValueType) {
 
 /**
  * ValueInput - add a value for the array data type
- *              creates, configure and add DOM elements
+ *              create, configure and add DOM elements
  *
  * @param {any} pValue - value to add
  */
 ValueInput.prototype.addArrayValue = function(pValue) {
 
   var listItem = document.createElement('li');
+
   var labelWrapper = document.createElement('span');
   labelWrapper.classList.add('labelwrapper');
 
@@ -366,13 +366,14 @@ ValueInput.prototype.addArrayValue = function(pValue) {
 
 /**
  * ValueInput - add a value for the object data type
- *              creates, configure and add DOM elements
+ *              create, configure and add DOM elements
  *
  * @param {any} pValue - value to add
  */
 ValueInput.prototype.addObjectValue = function(pLabel, pValue) {
 
   var listItem = document.createElement('li');
+
   var labelWrapper = document.createElement('span');
   labelWrapper.classList.add('labelwrapper');
 
@@ -501,9 +502,7 @@ ValueInput.prototype.onArrayValueChanged = function(pListItem, pEvent) {
   var oldValueType = this.getValueType(pEvent.oldValue);
   var newValueType = this.getValueType(pEvent.newValue);
 
-  if(newValueType != oldValueType) {
-    pListItem.classList.remove('datatype-' + oldValueType);
-  }
+  pListItem.classList.remove('datatype-' + oldValueType);
   pListItem.classList.add('datatype-' + newValueType);
 }
 
@@ -518,9 +517,7 @@ ValueInput.prototype.onObjectValueChanged = function(pListItem, pEvent) {
   var oldValueType = this.getValueType(pEvent.oldValue);
   var newValueType = this.getValueType(pEvent.newValue);
 
-  if(newValueType != oldValueType) {
-    pListItem.classList.remove('datatype-' + oldValueType);
-  }
+  pListItem.classList.remove('datatype-' + oldValueType);
   pListItem.classList.add('datatype-' + newValueType);
 }
 
@@ -706,6 +703,8 @@ ValueInput.prototype.forceUpdate = function() {
  */
 ValueInput.prototype.setCollapsed = function(bCollapsed) {
 
+  bCollapsed = Boolean(bCollapsed);
+
   if(bCollapsed == this.collapsed) {
     return;
   }
@@ -736,7 +735,7 @@ ValueInput.prototype.setCollapsed = function(bCollapsed) {
     this.wrapper.classList.remove('collapsed');
   }
 
-  this.collapsed = Boolean(bCollapsed);
+  this.collapsed = bCollapsed;
 }
 
 /**

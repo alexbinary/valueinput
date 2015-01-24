@@ -9,16 +9,16 @@
  *
  *   Collapsed :
  *
- *   span.valueinput.collapsed
+ *   span.valueinput.collapsed.datatype-*
  *     span.innerwrapper
  *       button.collapsebtn
  *       span
  *
  *   Not Collapsed :
  *
- *   span.valueinput
+ *   span.valueinput.datatype-*
  *     span.innerwrapper
- *       button
+ *       button.collapsebtn
  *       select
  *       span.valuewrapper
  *
@@ -26,13 +26,13 @@
  *
  *   span.valuewrapper
  *     ul
- *       li
+ *       li.datatype-*
  *         span.labelwrapper
- *            button
+ *            button.removebtn
  *            input
  *            text ":"
  *         span.valueinput
- *     button
+ *     button.addbtn
  */
 
 "use strict";

@@ -528,8 +528,11 @@ ValueInput.prototype.onObjectValueChanged = function(pListItem, pEvent) {
  */
 ValueInput.prototype.setValueType = function(pValueType) {
 
-  this.valueTypeSelect.value = pValueType;
-  this.onValueTypeSelectChange();
+  if(this.dataTypes.indexOf(pValueType) != -1) {
+
+    this.valueTypeSelect.value = pValueType;
+    this.onValueTypeSelectChange();
+  }
 }
 
 /**

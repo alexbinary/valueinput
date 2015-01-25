@@ -522,6 +522,34 @@ ValueInput.prototype.onObjectValueChanged = function(pListItem, pEvent) {
 }
 
 /**
+ * ValueInput - set allowed data types
+ *
+ * @param {string} pDataTypes - allowed datatypes (same value as in constructor)
+ */
+ValueInput.prototype.setDataTypes = function(pDataTypes) {
+
+  this.prepareDataTypes(pDataTypes);
+
+  var valueTypeSelect = this.valueTypeSelect;
+  var dataType        = this.valueTypeSelect.value;
+
+  this.initValueTypeSelect();
+
+  if(valueTypeSelect.parentNode) {
+    this.innerWrapper.replaceChild(this.valueTypeSelect, valueTypeSelect);
+  }
+
+  this.setValueType(this.dataTypes.indexOf(dataType) != -1 ? dataType : this.dataTypes[0]);
+
+  for(var i in this.arrayValueInputs) {
+    this.arrayValueInputs[i].setDataTypes(this.arrayDataTypes);
+  }
+  for(var i in this.objectValueInputs) {
+    this.objectValueInputs[i].setDataTypes(this.objectDataTypes);
+  }
+}
+
+/**
  * ValueInput - set the value data type
  *
  * @param {string} pValueType - new value data type

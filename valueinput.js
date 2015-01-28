@@ -77,55 +77,15 @@ function ValueInput(pParams) {
   this.objectDataTypes   = undefined;
   this.value             = undefined;
   this.valueText         = undefined;
-  this.collapsed         = undefined;
-  this.previousValueType = undefined;
+  this.previousDataType  = undefined;
   this.valueInitialized  = false;
+  this.collapsed         = true;
 
-  this.prepareDataTypes(dataTypes);
   this.initDOM();
 
+  this.setDataTypes(dataTypes);
   this.setValue(initialValue);
   this.setCollapsed(initialCollapse);
-}
-
-/**
- * ValueInput - prepare data types definition object
- */
-ValueInput.prototype.prepareDataTypes = function(pDataTypes) {
-
-  var dataTypes       = [];
-  var arrayDataTypes  = {};
-  var objectDataTypes = {};
-
-  var types = ['string', 'number', 'boolean', 'array', 'object', 'null', 'undefined'];
-
-  var allmissing = true;
-  for(var i in types) {
-    if(types[i] in pDataTypes) {
-      allmissing = false;
-      break;
-    }
-  }
-  for(var i in types) {
-    if((types[i] in pDataTypes && pDataTypes[types[i]]) || allmissing) {
-      dataTypes.push(types[i]);
-    }
-  }
-
-  if('array' in pDataTypes) {
-    if(typeof pDataTypes['array'] == 'object' && pDataTypes['array']) {
-      arrayDataTypes = pDataTypes['array'];
-    }
-  }
-  if('object' in pDataTypes) {
-    if(typeof pDataTypes['object'] == 'object' && pDataTypes['object']) {
-      arrayDataTypes = pDataTypes['object'];
-    }
-  }
-
-  this.dataTypes       = dataTypes;
-  this.arrayDataTypes  = arrayDataTypes;
-  this.objectDataTypes = objectDataTypes;
 }
 
 /**
@@ -143,33 +103,17 @@ ValueInput.prototype.initDOM = function() {
   this.collapseBtn.textContent = '';
   this.collapseBtn.classList.add('collapsebtn');
 
+  this.dataTypeSelectElement = document.createElement('select');
+
   this.valueWrapper = document.createElement('span');
   this.valueWrapper.classList.add('valuewrapper');
 
   this.valueLabel = document.createElement('span');
 
-  this.initValueTypeSelect();
   this.initValueInputs();
 
   this.initEvents();
   this.buildDOMTree();
-}
-
-/**
- * ValueInput - create SELECT element for value type selection
- */
-ValueInput.prototype.initValueTypeSelect = function() {
-
-  this.valueTypeSelect = document.createElement('select');
-
-  var types = this.dataTypes;
-  for(var i in types) {
-
-    var optElement = document.createElement('option');
-    optElement.value = types[i];
-    optElement.label = types[i];
-    this.valueTypeSelect.add(optElement);
-  }
 }
 
 /**
@@ -210,7 +154,7 @@ ValueInput.prototype.initEvents = function() {
 
   this.collapseBtn.addEventListener('click', this.toggleCollapsed.bind(this));
 
-  this.valueTypeSelect.addEventListener('change', this.onValueTypeSelectChange.bind(this));
+  this.dataTypeSelectElement.addEventListener('change', this.onDataTypeSelectElementChange.bind(this));
 
   this.stringInput.addEventListener('input', this.updateValue.bind(this));
   this.numberInput.addEventListener('input', this.updateValue.bind(this));
@@ -224,67 +168,133 @@ ValueInput.prototype.initEvents = function() {
 
 /**
  * ValueInput - assembles main DOM elements
+ *              in collapsed mode
  */
 ValueInput.prototype.buildDOMTree = function() {
 
   this.wrapper.appendChild(this.innerWrapper);
   this.innerWrapper.appendChild(this.collapseBtn);
-  this.innerWrapper.appendChild(this.valueTypeSelect);
-  this.innerWrapper.appendChild(this.valueWrapper);
+  this.innerWrapper.appendChild(this.valueLabel);
 }
 
 /**
- * ValueInput - new data type has been selected
+ * ValueInput - prepare data types definition objects
  */
-ValueInput.prototype.onValueTypeSelectChange = function(pEvent) {
+ValueInput.prototype.prepareDataTypes = function(pDataTypes) {
 
-  var newValueType = this.valueTypeSelect.value;
+  var dataTypes       = [];
+  var arrayDataTypes  = {};
+  var objectDataTypes = {};
 
-  this.unsetValueInput(this.previousValueType);
-  this.setupValueInput(newValueType);
+  var types = ['string', 'number', 'boolean', 'array', 'object', 'null', 'undefined'];
 
-  this.updateValue();
+  var allmissing = true;
+  for(var i=0, l=types.length ; i<l ; i++) {
+    if(types[i] in pDataTypes) {
+      allmissing = false;
+      break;
+    }
+  }
+  for(var i=0, l=types.length ; i<l ; i++) {
+    if((types[i] in pDataTypes && pDataTypes[types[i]]) || allmissing) {
+      dataTypes.push(types[i]);
+    }
+  }
 
-  this.previousValueType = newValueType;
+  if('array' in pDataTypes) {
+    if(typeof pDataTypes['array'] == 'object' && pDataTypes['array']) {
+      arrayDataTypes = pDataTypes['array'];
+    }
+  }
+  if('object' in pDataTypes) {
+    if(typeof pDataTypes['object'] == 'object' && pDataTypes['object']) {
+      arrayDataTypes = pDataTypes['object'];
+    }
+  }
+
+  this.dataTypes       = dataTypes;
+  this.arrayDataTypes  = arrayDataTypes;
+  this.objectDataTypes = objectDataTypes;
+}
+
+/**
+ * ValueInput - return data type identifier for given value
+ *
+ * @param {any} pValue - value to get the data type of
+ */
+ValueInput.prototype.getDataType = function(pValue) {
+
+  var dataType = undefined;
+
+  if(pValue === null) {
+
+    dataType = 'null';
+
+  } else if(pValue === undefined) {
+
+    dataType = 'undefined';
+
+  } else if(typeof pValue == 'string') {
+
+    dataType = 'string';
+
+  } else if(typeof pValue == 'number') {
+
+    dataType = 'number';
+
+  } else if(typeof pValue == 'boolean') {
+
+    dataType = 'boolean';
+
+  } else if(Array.isArray(pValue)) {
+
+    dataType = 'array';
+
+  } else if(typeof pValue == 'object') {
+
+    dataType = 'object';
+  }
+
+  return dataType;
 }
 
 /**
  * ValueInput - remove input elements related to given data type from DOM tree
  */
-ValueInput.prototype.unsetValueInput = function(pValueType) {
+ValueInput.prototype.unsetValueInput = function(pDataType) {
 
-  if(pValueType == 'string') {
+  if(pDataType == 'string') {
 
     this.valueWrapper.removeChild(this.stringInput);
     this.wrapper.classList.remove('datatype-string');
 
-  } else if(pValueType == 'number') {
+  } else if(pDataType == 'number') {
 
     this.valueWrapper.removeChild(this.numberInput);
     this.wrapper.classList.remove('datatype-number');
 
-  } else if(pValueType == 'boolean') {
+  } else if(pDataType == 'boolean') {
 
     this.valueWrapper.removeChild(this.booleanInput);
     this.wrapper.classList.remove('datatype-boolean');
 
-  } else if(pValueType == 'array') {
+  } else if(pDataType == 'array') {
 
     this.valueWrapper.removeChild(this.arrayListElement);
     this.valueWrapper.removeChild(this.arrayAddBtn);
     this.wrapper.classList.remove('datatype-array');
 
-  } else if(pValueType == 'object') {
+  } else if(pDataType == 'object') {
 
     this.valueWrapper.removeChild(this.objectListElement);
     this.valueWrapper.removeChild(this.objectAddBtn);
     this.wrapper.classList.remove('datatype-object');
 
-  } else if(pValueType == 'null') {
+  } else if(pDataType == 'null') {
 
     this.wrapper.classList.remove('datatype-null');
 
-  } else if(pValueType == 'undefined') {
+  } else if(pDataType == 'undefined') {
 
     this.wrapper.classList.remove('datatype-undefined');
   }
@@ -293,44 +303,45 @@ ValueInput.prototype.unsetValueInput = function(pValueType) {
 /**
  * ValueInput - insert input elements related to given data type into DOM tree
  */
-ValueInput.prototype.setupValueInput = function(pValueType) {
+ValueInput.prototype.setupValueInput = function(pDataType) {
 
-  if(pValueType == 'string') {
+  if(pDataType == 'string') {
 
     this.valueWrapper.appendChild(this.stringInput);
     this.wrapper.classList.add('datatype-string');
 
-  } else if(pValueType == 'number') {
+  } else if(pDataType == 'number') {
 
     this.valueWrapper.appendChild(this.numberInput);
     this.wrapper.classList.add('datatype-number');
 
-  } else if(pValueType == 'boolean') {
+  } else if(pDataType == 'boolean') {
 
     this.valueWrapper.appendChild(this.booleanInput);
     this.wrapper.classList.add('datatype-boolean');
 
-  } else if(pValueType == 'array') {
+  } else if(pDataType == 'array') {
 
     this.valueWrapper.appendChild(this.arrayListElement);
     this.valueWrapper.appendChild(this.arrayAddBtn);
     this.wrapper.classList.add('datatype-array');
 
-  } else if(pValueType == 'object') {
+  } else if(pDataType == 'object') {
 
     this.valueWrapper.appendChild(this.objectListElement);
     this.valueWrapper.appendChild(this.objectAddBtn);
     this.wrapper.classList.add('datatype-object');
 
-  } else if(pValueType == 'null') {
+  } else if(pDataType == 'null') {
 
     this.wrapper.classList.add('datatype-null');
 
-  } else if(pValueType == 'undefined') {
+  } else if(pDataType == 'undefined') {
 
     this.wrapper.classList.add('datatype-undefined');
   }
 }
+
 
 /**
  * ValueInput - add a value for the array data type
@@ -413,7 +424,7 @@ ValueInput.prototype.setArrayValues = function(pValues) {
 
   this.clearArrayValues();
 
-  for(var i in pValues) {
+  for(var i=0, l=pValues.length ; i<l ; i++) {
     this.addArrayValue(pValues[i]);
   }
 }
@@ -469,174 +480,69 @@ ValueInput.prototype.removeObjectValue = function(pLabelInput, pValueInput, pLis
 }
 
 /**
- * ValueInput - remove all elements related to all values for the array data type
+ * ValueInput - remove all elements related to all sub-values for the array data type
  */
 ValueInput.prototype.clearArrayValues = function() {
 
   while(this.arrayListElement.hasChildNodes()) {
-    this.arrayListElement.removeChild(this.arrayListElement.lastChild);
+    this.arrayListElement.removeChild(this.arrayListElement.firstChild);
   }
   this.arrayValueInputs = [];
 }
 
 /**
- * ValueInput - remove all elements related to all values for the object data type
+ * ValueInput - remove all elements related to all sub-values for the object data type
  */
 ValueInput.prototype.clearObjectValues = function() {
 
   while(this.objectListElement.hasChildNodes()) {
-    this.objectListElement.removeChild(this.objectListElement.lastChild);
+    this.objectListElement.removeChild(this.objectListElement.firstChild);
   }
   this.objectLabelInputs = [];
   this.objectValueInputs = [];
 }
 
 /**
- * ValueInput - process the change of an array value
- *
- * @param {any}   pListItem - top level wrapper element associated with the changed value
- * @param {Event} pEvent    - 'valuechange' event
- */
-ValueInput.prototype.onArrayValueChanged = function(pListItem, pEvent) {
-
-  var oldValueType = this.getValueType(pEvent.oldValue);
-  var newValueType = this.getValueType(pEvent.newValue);
-
-  pListItem.classList.remove('datatype-' + oldValueType);
-  pListItem.classList.add('datatype-' + newValueType);
-}
-
-/**
- * ValueInput - process the change of an object value
- *
- * @param {any}   pListItem - top level wrapper element associated with the changed value
- * @param {Event} pEvent    - 'valuechange' event
- */
-ValueInput.prototype.onObjectValueChanged = function(pListItem, pEvent) {
-
-  var oldValueType = this.getValueType(pEvent.oldValue);
-  var newValueType = this.getValueType(pEvent.newValue);
-
-  pListItem.classList.remove('datatype-' + oldValueType);
-  pListItem.classList.add('datatype-' + newValueType);
-}
-
-/**
- * ValueInput - set allowed data types
- *
- * @param {string} pDataTypes - allowed datatypes (same value as in constructor)
- */
-ValueInput.prototype.setDataTypes = function(pDataTypes) {
-
-  this.prepareDataTypes(pDataTypes);
-
-  var valueTypeSelect = this.valueTypeSelect;
-  var dataType        = this.valueTypeSelect.value;
-
-  this.initValueTypeSelect();
-
-  if(valueTypeSelect.parentNode) {
-    this.innerWrapper.replaceChild(this.valueTypeSelect, valueTypeSelect);
-  }
-
-  this.setValueType(this.dataTypes.indexOf(dataType) != -1 ? dataType : this.dataTypes[0]);
-
-  for(var i in this.arrayValueInputs) {
-    this.arrayValueInputs[i].setDataTypes(this.arrayDataTypes);
-  }
-  for(var i in this.objectValueInputs) {
-    this.objectValueInputs[i].setDataTypes(this.objectDataTypes);
-  }
-}
-
-/**
- * ValueInput - set the value data type
- *
- * @param {string} pValueType - new value data type
- */
-ValueInput.prototype.setValueType = function(pValueType) {
-
-  if(this.dataTypes.indexOf(pValueType) != -1) {
-
-    this.valueTypeSelect.value = pValueType;
-    this.onValueTypeSelectChange();
-  }
-}
-
-/**
- * ValueInput - set the value
- *
- * @param {string} pValue - new value data type
- */
-ValueInput.prototype.setValue = function(pValue) {
-
-  var valueType = this.getValueType(pValue);
-
-  if(valueType == 'string') {
-
-    this.stringInput.value = pValue;
-
-  } else if(valueType == 'number') {
-
-    this.numberInput.value = pValue;
-
-  } else if(valueType == 'boolean') {
-
-    this.booleanInput.checked = pValue;
-
-  } else if(valueType == 'array') {
-
-    this.setArrayValues(pValue);
-
-  } else if(valueType == 'object') {
-
-    this.setObjectValues(pValue);
-  }
-
-  this.setValueType(valueType);
-}
-
-/**
- * ValueInput - update inner state to reflect new data value
+ * ValueInput - update `value` property
  */
 ValueInput.prototype.updateValue = function() {
 
-  var valueType = this.valueTypeSelect.value
-  var value     = undefined;
+  var dataType = this.dataTypeSelectElement.value
+  var value    = undefined;
 
-  if(valueType == 'string') {
+  if(dataType == 'string') {
 
     value = String(this.stringInput.value);
 
-  } else if(valueType == 'number') {
+  } else if(dataType == 'number') {
 
     value = Number(this.numberInput.value);
 
-  } else if(valueType == 'boolean') {
+  } else if(dataType == 'boolean') {
 
     value = Boolean(this.booleanInput.checked);
 
-  } else if(valueType == 'array') {
+  } else if(dataType == 'array') {
 
     value = [];
 
-    for(var i in this.arrayValueInputs) {
+    for(var i=0, l=this.arrayValueInputs.length ; i<l ; i++) {
       value.push(this.arrayValueInputs[i].value);
     }
 
-  } else if(valueType == 'object') {
+  } else if(dataType == 'object') {
 
     value = {};
 
-    for(var i in this.objectValueInputs) {
+    for(var i=0, l=this.objectValueInputs.length ; i<l ; i++) {
       value[this.objectLabelInputs[i].value] = this.objectValueInputs[i].value;
     }
 
-  } else if(valueType == 'null') {
+  } else if(dataType == 'null') {
 
     value = null;
 
-  } else if(valueType == 'undefined') {
+  } else if(dataType == 'undefined') {
 
     value = undefined;
   }
@@ -649,9 +555,7 @@ ValueInput.prototype.updateValue = function() {
 
     this.valueInitialized = true;
 
-    this.changeEvent.oldValue = previousValue;
-    this.changeEvent.newValue = this.value;
-    this.wrapper.dispatchEvent(this.changeEvent);
+    this.dispatchChangeEvent(previousValue, this.value);
   }
 }
 
@@ -660,26 +564,26 @@ ValueInput.prototype.updateValue = function() {
  */
 ValueInput.prototype.updateValueText = function() {
 
-  var valueType = this.valueTypeSelect.value;
+  var dataType  = this.dataTypeSelectElement.value;
   var valueText = undefined;
 
-  if(valueType == 'string') {
+  if(dataType == 'string') {
 
     valueText = '"' + this.stringInput.value + '"';
 
-  } else if(valueType == 'number') {
+  } else if(dataType == 'number') {
 
     valueText = this.numberInput.value;
 
-  } else if(valueType == 'boolean') {
+  } else if(dataType == 'boolean') {
 
     valueText = this.booleanInput.checked ? 'true' : 'false';
 
-  } else if(valueType == 'array') {
+  } else if(dataType == 'array') {
 
     valueText = '[';
 
-    for(var i in this.arrayValueInputs) {
+    for(var i=0, l=this.arrayValueInputs.length ; i<l ; i++) {
 
       if(i != 0) {
         valueText += ', ';
@@ -689,11 +593,11 @@ ValueInput.prototype.updateValueText = function() {
 
     valueText += ']';
 
-  } else if(valueType == 'object') {
+  } else if(dataType == 'object') {
 
     valueText = '{';
 
-    for(var i in this.objectValueInputs) {
+    for(var i=0, l=this.objectValueInputs.length ; i<l ; i++) {
 
       if(i != 0) {
         valueText += ', ';
@@ -703,11 +607,11 @@ ValueInput.prototype.updateValueText = function() {
 
     valueText += '}';
 
-  } else if(valueType == 'null') {
+  } else if(dataType == 'null') {
 
     valueText = 'null';
 
-  } else if(valueType == 'undefined') {
+  } else if(dataType == 'undefined') {
 
     valueText = 'undefined';
   }
@@ -718,17 +622,96 @@ ValueInput.prototype.updateValueText = function() {
 
 /**
  * ValueInput - force value update
- *              send `valuechange` event even if not needed
+ *              dispatch event indicating that the input's value has changed
  */
 ValueInput.prototype.forceUpdate = function() {
 
-  this.changeEvent.oldValue = this.value;
-  this.changeEvent.newValue = this.value;
+  this.dispatchChangeEvent(this.value, this.value);
+}
+
+/**
+ * ValueInput - dispatch event indicating that the input's value has changed
+ *
+ * @param {any} pOldValue - old input's value
+ * @param {any} pNewValue - new input's value
+ */
+ValueInput.prototype.dispatchChangeEvent = function(pOldValue, pNewValue) {
+
+  this.changeEvent.oldValue = pOldValue;
+  this.changeEvent.newValue = pNewValue;
   this.wrapper.dispatchEvent(this.changeEvent);
 }
 
 /**
- * ValueInput - set Collapsed state
+ * ValueInput - process the change of the selected data type
+ *
+ * @param {Event} pEvent - SELECT element's `change` event
+ */
+ValueInput.prototype.onDataTypeSelectElementChange = function(pEvent) {
+
+  var newDataType = this.dataTypeSelectElement.value;
+
+  this.unsetValueInput(this.previousDataType);
+  this.setupValueInput(newDataType);
+
+  this.updateValue();
+
+  this.previousDataType = newDataType;
+}
+
+/**
+ * ValueInput - process the change of a sub-value for the array data type
+ *
+ * @param {any}   pListItem - top level wrapper element associated with the changed value
+ * @param {Event} pEvent    - 'valuechange' event
+ */
+ValueInput.prototype.onArrayValueChanged = function(pListItem, pEvent) {
+
+  var oldValueType = this.getDataType(pEvent.oldValue);
+  var newDataType = this.getDataType(pEvent.newValue);
+
+  pListItem.classList.remove('datatype-' + oldValueType);
+  pListItem.classList.add('datatype-' + newDataType);
+}
+
+/**
+ * ValueInput - process the change of a sub-value for the object data type
+ *
+ * @param {any}   pListItem - top level wrapper element associated with the changed value
+ * @param {Event} pEvent    - 'valuechange' event
+ */
+ValueInput.prototype.onObjectValueChanged = function(pListItem, pEvent) {
+
+  var oldValueType = this.getDataType(pEvent.oldValue);
+  var newDataType = this.getDataType(pEvent.newValue);
+
+  pListItem.classList.remove('datatype-' + oldValueType);
+  pListItem.classList.add('datatype-' + newDataType);
+}
+
+/**
+ * ValueInput - replace given element by current value input
+ *              keep element's classes and id
+ *
+ * @param {DOMElement} pElement - element to replace
+ */
+ValueInput.prototype.replaceElement = function(pElement) {
+
+  if(pElement) {
+    pElement.parentNode.replaceChild(this.wrapper, pElement);
+
+    for(var i=0 ; i<pElement.classList.length ; i++) {
+      this.wrapper.classList.add(pElement.classList.item(i));
+    }
+
+    if(pElement.id) {
+      this.wrapper.id = pElement.id;
+    }
+  }
+}
+
+/**
+ * ValueInput - set collapsed state
  *
  * @param {boolean} bCollapsed - callapsed state
  */
@@ -742,35 +725,26 @@ ValueInput.prototype.setCollapsed = function(bCollapsed) {
 
   if(bCollapsed) {
 
-    this.innerWrapper.removeChild(this.valueTypeSelect);
+    this.innerWrapper.removeChild(this.dataTypeSelectElement);
+    this.innerWrapper.removeChild(this.valueWrapper);
 
-    if(this.valueWrapper.parentNode) {
-      this.innerWrapper.replaceChild(this.valueLabel, this.valueWrapper);
-    } else {
-      this.innerWrapper.appendChild(this.valueLabel);
-    }
+    this.innerWrapper.appendChild(this.valueLabel);
 
   } else {
 
-    if(this.valueLabel.parentNode) {
-      this.innerWrapper.replaceChild(this.valueWrapper, this.valueLabel);
-    } else {
-      this.innerWrapper.appendChild(this.valueWrapper);
-    }
-    this.innerWrapper.insertBefore(this.valueTypeSelect, this.valueWrapper);
+    this.innerWrapper.removeChild(this.valueLabel);
+
+    this.innerWrapper.appendChild(this.dataTypeSelectElement);
+    this.innerWrapper.appendChild(this.valueWrapper);
   }
 
-  if(bCollapsed) {
-    this.wrapper.classList.add('collapsed');
-  } else {
-    this.wrapper.classList.remove('collapsed');
-  }
+  this.wrapper.classList.toggle('collapsed', bCollapsed);
 
   this.collapsed = bCollapsed;
 }
 
 /**
- * ValueInput - toggle Collapsed state
+ * ValueInput - toggle collapsed state
  */
 ValueInput.prototype.toggleCollapsed = function() {
 
@@ -778,63 +752,82 @@ ValueInput.prototype.toggleCollapsed = function() {
 }
 
 /**
- * ValueInput - return value type identifier for given value
+ * ValueInput - set allowed data types
  *
- * @param {any} pValue - value to get the value type of
+ * @param {string} pDataTypes - allowed datatypes (same value as in constructor)
  */
-ValueInput.prototype.getValueType = function(pValue) {
+ValueInput.prototype.setDataTypes = function(pDataTypes) {
 
-  var valueType = undefined;
+  this.prepareDataTypes(pDataTypes);
 
-  if(pValue === null) {
+  var dataType = this.dataTypeSelectElement.value;
 
-    valueType = 'null';
-
-  } else if(pValue === undefined) {
-
-    valueType = 'undefined';
-
-  } else if(typeof pValue == 'string') {
-
-    valueType = 'string';
-
-  } else if(typeof pValue == 'number') {
-
-    valueType = 'number';
-
-  } else if(typeof pValue == 'boolean') {
-
-    valueType = 'boolean';
-
-  } else if(Array.isArray(pValue)) {
-
-    valueType = 'array';
-
-  } else if(typeof pValue == 'object') {
-
-    valueType = 'object';
+  while(this.dataTypeSelectElement.hasChildNodes()) {
+    this.dataTypeSelectElement.removeChild(this.dataTypeSelectElement.firstChild);
   }
 
-  return valueType;
+  var types = this.dataTypes;
+  for(var i=0, l=types.length ; i<l ; i++) {
+
+    var optElement = document.createElement('option');
+    optElement.value = types[i];
+    optElement.label = types[i];
+    this.dataTypeSelectElement.add(optElement);
+  }
+
+  this.setDataType(this.dataTypes.indexOf(dataType) != -1 ? dataType : this.dataTypes[0]);
+
+  for(var i=0, l=this.arrayValueInputs.length ; i<l ; i++) {
+    this.arrayValueInputs[i].setDataTypes(this.arrayDataTypes);
+  }
+  for(var i=0, l=this.objectValueInputs.length ; i<l ; i++) {
+    this.objectValueInputs[i].setDataTypes(this.objectDataTypes);
+  }
 }
 
 /**
- * ValueInput - replace given element by current value input
- *              keep element's classes and id
+ * ValueInput - set the input's active data type
  *
- * @param {DOMElement} pElement - element to replace
+ * @param {string} pDataType - new data type
  */
-ValueInput.prototype.replace = function(pElement) {
+ValueInput.prototype.setDataType = function(pDataType) {
 
-  if(pElement) {
-    pElement.parentNode.replaceChild(this.wrapper, pElement);
+  if(this.dataTypes.indexOf(pDataType) != -1) {
 
-    for(var i=0 ; i<pElement.classList.length ; i++) {
-      this.wrapper.classList.add(pElement.classList.item(i));
-    }
-
-    if(pElement.id) {
-      this.wrapper.id = pElement.id;
-    }
+    this.dataTypeSelectElement.value = pDataType;
+    this.onDataTypeSelectElementChange();
   }
+}
+
+/**
+ * ValueInput - set the input's value
+ *
+ * @param {string} pValue - new value
+ */
+ValueInput.prototype.setValue = function(pValue) {
+
+  var dataType = this.getDataType(pValue);
+
+  if(dataType == 'string') {
+
+    this.stringInput.value = pValue;
+
+  } else if(dataType == 'number') {
+
+    this.numberInput.value = pValue;
+
+  } else if(dataType == 'boolean') {
+
+    this.booleanInput.checked = pValue;
+
+  } else if(dataType == 'array') {
+
+    this.setArrayValues(pValue);
+
+  } else if(dataType == 'object') {
+
+    this.setObjectValues(pValue);
+  }
+
+  this.setDataType(dataType);
 }

@@ -94,7 +94,7 @@ function ValueInput(pParams) {
 ValueInput.prototype.initDOM = function() {
 
   this.wrapper = document.createElement('span');
-  this.wrapper.classList.add('valueinput');
+  this.setDefaultClass();
 
   this.innerWrapper = document.createElement('span');
   this.innerWrapper.classList.add('innerwrapper');
@@ -113,6 +113,7 @@ ValueInput.prototype.initDOM = function() {
   this.initValueInputs();
 
   this.initEvents();
+
   this.buildDOMTree();
 }
 
@@ -175,6 +176,36 @@ ValueInput.prototype.buildDOMTree = function() {
   this.wrapper.appendChild(this.innerWrapper);
   this.innerWrapper.appendChild(this.collapseBtn);
   this.innerWrapper.appendChild(this.valueLabel);
+}
+
+/**
+ * ValueInput - set class on top level element
+ */
+ValueInput.prototype.setDefaultClass = function() {
+
+  this.wrapper.classList.add('valueinput');
+}
+
+/**
+ * ValueInput - set datatype class on top level element
+ *
+ * @param {Element} pElement  - DOM element to apply class to - defaults to top level element
+ * @param {string}  pDataType - data type identifier          - defaults to current data type
+ */
+ValueInput.prototype.setDataTypeClass = function(pElement, pDataType) {
+
+  pElement  = pElement  || this.wrapper;
+  pDataType = pDataType || this.dataTypeSelectElement.value;
+
+  for(var i=0 ; i<pElement.classList.length ; ) {
+
+    if(pElement.classList.item(i).match(/^datatype\-(string|number|boolean|array|object|null|undefined)$/)) {
+      pElement.classList.remove(pElement.classList.item(i));
+    } else {
+      i++;
+    }
+  }
+  pElement.classList.add('datatype-' + pDataType);
 }
 
 /**
@@ -266,37 +297,28 @@ ValueInput.prototype.unsetValueInput = function(pDataType) {
   if(pDataType == 'string') {
 
     this.valueWrapper.removeChild(this.stringInput);
-    this.wrapper.classList.remove('datatype-string');
 
   } else if(pDataType == 'number') {
 
     this.valueWrapper.removeChild(this.numberInput);
-    this.wrapper.classList.remove('datatype-number');
 
   } else if(pDataType == 'boolean') {
 
     this.valueWrapper.removeChild(this.booleanInput);
-    this.wrapper.classList.remove('datatype-boolean');
 
   } else if(pDataType == 'array') {
 
     this.valueWrapper.removeChild(this.arrayListElement);
     this.valueWrapper.removeChild(this.arrayAddBtn);
-    this.wrapper.classList.remove('datatype-array');
 
   } else if(pDataType == 'object') {
 
     this.valueWrapper.removeChild(this.objectListElement);
     this.valueWrapper.removeChild(this.objectAddBtn);
-    this.wrapper.classList.remove('datatype-object');
 
   } else if(pDataType == 'null') {
 
-    this.wrapper.classList.remove('datatype-null');
-
   } else if(pDataType == 'undefined') {
-
-    this.wrapper.classList.remove('datatype-undefined');
   }
 }
 
@@ -308,37 +330,28 @@ ValueInput.prototype.setupValueInput = function(pDataType) {
   if(pDataType == 'string') {
 
     this.valueWrapper.appendChild(this.stringInput);
-    this.wrapper.classList.add('datatype-string');
 
   } else if(pDataType == 'number') {
 
     this.valueWrapper.appendChild(this.numberInput);
-    this.wrapper.classList.add('datatype-number');
 
   } else if(pDataType == 'boolean') {
 
     this.valueWrapper.appendChild(this.booleanInput);
-    this.wrapper.classList.add('datatype-boolean');
 
   } else if(pDataType == 'array') {
 
     this.valueWrapper.appendChild(this.arrayListElement);
     this.valueWrapper.appendChild(this.arrayAddBtn);
-    this.wrapper.classList.add('datatype-array');
 
   } else if(pDataType == 'object') {
 
     this.valueWrapper.appendChild(this.objectListElement);
     this.valueWrapper.appendChild(this.objectAddBtn);
-    this.wrapper.classList.add('datatype-object');
 
   } else if(pDataType == 'null') {
 
-    this.wrapper.classList.add('datatype-null');
-
   } else if(pDataType == 'undefined') {
-
-    this.wrapper.classList.add('datatype-undefined');
   }
 }
 
@@ -507,7 +520,7 @@ ValueInput.prototype.clearObjectValues = function() {
  */
 ValueInput.prototype.updateValue = function() {
 
-  var dataType = this.dataTypeSelectElement.value
+  var dataType = this.dataTypeSelectElement.value;
   var value    = undefined;
 
   if(dataType == 'string') {
@@ -654,6 +667,7 @@ ValueInput.prototype.onDataTypeSelectElementChange = function(pEvent) {
   this.unsetValueInput(this.previousDataType);
   this.setupValueInput(newDataType);
 
+  this.setDataTypeClass();
   this.updateValue();
 
   this.previousDataType = newDataType;
@@ -670,8 +684,7 @@ ValueInput.prototype.onArrayValueChanged = function(pListItem, pEvent) {
   var oldValueType = this.getDataType(pEvent.oldValue);
   var newDataType = this.getDataType(pEvent.newValue);
 
-  pListItem.classList.remove('datatype-' + oldValueType);
-  pListItem.classList.add('datatype-' + newDataType);
+  this.setDataTypeClass(pListItem, newDataType);
 }
 
 /**
@@ -685,8 +698,7 @@ ValueInput.prototype.onObjectValueChanged = function(pListItem, pEvent) {
   var oldValueType = this.getDataType(pEvent.oldValue);
   var newDataType = this.getDataType(pEvent.newValue);
 
-  pListItem.classList.remove('datatype-' + oldValueType);
-  pListItem.classList.add('datatype-' + newDataType);
+  this.setDataTypeClass(pListItem, newDataType);
 }
 
 /**
@@ -700,10 +712,16 @@ ValueInput.prototype.replaceElement = function(pElement) {
   if(pElement) {
     pElement.parentNode.replaceChild(this.wrapper, pElement);
 
+    while(this.wrapper.classList.length) {
+      this.wrapper.classList.remove(this.wrapper.classList.item(0));
+    }
     for(var i=0 ; i<pElement.classList.length ; i++) {
       this.wrapper.classList.add(pElement.classList.item(i));
     }
+    this.setDefaultClass();
+    this.setDataTypeClass();
 
+    this.wrapper.id = null;
     if(pElement.id) {
       this.wrapper.id = pElement.id;
     }

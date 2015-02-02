@@ -12,21 +12,21 @@
  *   span.valueinput.collapsed.datatype-*
  *     span.innerwrapper
  *       button.collapsebtn
- *       span
+ *       span.valuelabel
  *
  *   Not Collapsed :
  *
  *   span.valueinput.datatype-*
  *     span.innerwrapper
  *       button.collapsebtn
- *       select
+ *       select.datatypeselector
  *       span.valuewrapper
  *
  *   Value wrapper for type object :
  *
  *   span.valuewrapper
- *     ul
- *       li.datatype-*
+ *     ul.valuelist
+ *       li.valuelistitem.datatype-*
  *         span.labelwrapper
  *            button.removebtn
  *            input
@@ -104,11 +104,13 @@ ValueInput.prototype.initDOM = function() {
   this.collapseBtn.classList.add('collapsebtn');
 
   this.dataTypeSelectElement = document.createElement('select');
+  this.dataTypeSelectElement.classList.add('datatypeselector');
 
   this.valueWrapper = document.createElement('span');
   this.valueWrapper.classList.add('valuewrapper');
 
   this.valueLabel = document.createElement('span');
+  this.valueLabel.classList.add('valuelabel');
 
   this.initValueInputs();
 
@@ -132,7 +134,9 @@ ValueInput.prototype.initValueInputs = function() {
   this.booleanInput.type = 'checkbox';
 
   this.arrayListElement = document.createElement('ul');
+  this.arrayListElement.classList.add('valuelist');
   this.objectListElement = document.createElement('ul');
+  this.objectListElement.classList.add('valuelist');
 
   this.arrayAddBtn = document.createElement('button');
   this.arrayAddBtn.textContent = '+';
@@ -365,6 +369,7 @@ ValueInput.prototype.setupValueInput = function(pDataType) {
 ValueInput.prototype.addArrayValue = function(pValue) {
 
   var listItem = document.createElement('li');
+  listItem.classList.add('valuelistitem');
 
   var labelWrapper = document.createElement('span');
   labelWrapper.classList.add('labelwrapper');
@@ -397,6 +402,7 @@ ValueInput.prototype.addArrayValue = function(pValue) {
 ValueInput.prototype.addObjectValue = function(pLabel, pValue) {
 
   var listItem = document.createElement('li');
+  listItem.classList.add('valuelistitem');
 
   var labelWrapper = document.createElement('span');
   labelWrapper.classList.add('labelwrapper');

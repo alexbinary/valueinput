@@ -118,6 +118,194 @@ vi.toggleCollapsed();   // widget is collapsed
 vi.toggleCollapsed();   // widget is expanded
 ```
 
+## Styling
+
+The widget itself does not contain any CSS.
+
+The DOM elements are equipped with classes to help apply style.
+The DOM tree looks like the following :
+
+```
+Collapsed :
+
+  span.valueinput.collapsed.datatype-*
+    span.innerwrapper
+      button.collapsebtn
+      span.valuelabel
+
+Not Collapsed :
+
+  span.valueinput.datatype-*
+    span.innerwrapper
+      button.collapsebtn
+      select.datatypeselector
+      span.valuewrapper
+
+Value wrapper for type array :
+
+  span.valuewrapper
+    ul.valuelist
+      li.valuelistitem.datatype-*
+        span.valueinput
+    button.addbtn
+
+Value wrapper for type object :
+
+  span.valuewrapper
+    ul.valuelist
+      li.valuelistitem.datatype-*
+        span.labelwrapper
+          button.removebtn
+          input
+          text ":"
+        span.valueinput
+    button.addbtn
+```
+
+Class `datatype-*` can be :
+- `datatype-string`
+- `datatype-number`
+- `datatype-boolean`
+- `datatype-array`
+- `datatype-object`
+- `datatype-null`
+- `datatype-undefined`
+
+
+# Documentation
+
+
+## Structure
+
+Widget is composed of two main parts : the datatype selector and the value input elements.
+Each data type has specific input elements :
+- string   : `<input>` tag of type `text`
+- number   : `<input>` tag of type `number`
+- boolean  : `<input>` tag of type `checkbox`
+- array    : multiple ValueInput widgets
+- object   : multiple pair of `<input>` tag of type `text` for the labels and ValueInput widgets for the values
+- null     : no input
+- undefined: no input
+
+Types array an object form a recursive structure where ValueInput widgets can be nested indefinitely.
+
+### Collapsed and expanded
+
+Widget has two mode : collapsed and expanded.
+
+Users can only input value when widget is expanded.
+When collapsed, the datatype selector is removed and the inputs are replaced
+by a label that displays a textual representation of the current value.
+
+A button allows users to expand or collapse the widget.
+Collapse state can also be set programmatically via the `setCollapsed` or `toggleCollapsed` functions.
+
+
+## Data persistance
+
+The value for each data type is retained when switching to another data type.
+Switching back to a data type reapplies the previous value for that data type.
+
+
+## Event
+
+The `valuechange` event is fired after the widget's value changes.
+
+Event object contains the following properties :
+- `oldValue` : value before change
+- `newValue` : value after change
+
+The event may be fired when the value has not actually changed,
+i.e. `oldValue` and `newValue` can be equal.
+
+The event is dispatched on the widget's toplevel DOM element,
+which can be accessed via the `.wrapper` property.
+
+
+## Properties
+
+The following properties should be considered read-only.
+Setting one of them will result in undefined behavior.
+
+### collapsed
+
+Contains the widget's current collapse state :
+- `true` : widget is collapsed
+- `false`: widget is expanded
+
+Use this property only to read the current state.
+Use `setCollapsed` or `toggleCollapsed` to set the collapse state.
+
+### value
+
+Contains the widget's current value.
+
+Use that property only to read the current value.
+To set the value use the `setValue` function.
+
+### wrapper
+
+Contains the widget's toplevel DOM element.
+
+Use this property to grab the widget to insert it in the DOM tree.
+
+
+## Methods
+
+### replaceElement(element)
+
+Replace the given DOM element `element` by the widget.
+Widget takes classes and id of replaces element.
+
+`element` must have a parent.
+
+### setCollapsed(collapse)
+
+Set the widget's collapse state :
+- `collapse` = `true` : widget is collapsed
+- `collapse` = `false`: widget is expanded
+
+### setDataType(type)
+
+Set the widget's current data type to `type`.
+`type` can be:
+- `string`
+- `number`
+- `boolean`
+- `array`
+- `object`
+- `null`
+- `undefined`
+
+This has the same effect than the user selecting the data type.
+
+### setDataTypes(types)
+
+Set the allowed data types.
+
+`types` is a dictionary.
+Keys are data type identifier (`string`, `number`, `boolean`, `array`, `object`, `null`, `undefined`).
+A truthy value means the corresponding data type is allowed.
+A falsy value means the corresponding data type is not allowed.
+
+For types `array` and `object`, a truthy value means all data types are allowed
+for the values of the array or object.
+
+Value for the types `array` and `object` can be a dictionnary that specifies which data type are allowed.
+This dictionnary has the same structure as the main dictionnary.
+Dictionnaries can be nested indefinitely.
+
+### setValue(value)
+
+Set the widget's current value to `value`.
+Widget automatically changes to the appropriate data type.
+
+### toggleCollapsed()
+
+Toggle the collapse state.
+If widget is collapsed then it becomes expanded.
+If widget is expanded then it becomes collapsed.
+
 
 # Infos
 

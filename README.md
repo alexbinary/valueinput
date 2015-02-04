@@ -29,7 +29,7 @@ document.getElementById('parent').appendChild(vi.wrapper);
 ## Get input value
 
 ```javascript
-// use the 'value' property to get the current value :
+// use the .value property to get the current value :
 console.log(vi.value);
 
 // subscribe to the 'valuechange' event to detect when current value changes :
@@ -46,20 +46,21 @@ vi.wrapper.addEventListener('valuechange', function(event) {
 ```javascript
 // initial value can be set via the 'value' option in the initialization
 // dictionary (default is undefined) :
-var vi = new ValueInput({value: 42}); // initial value is 42, type: number
+var vi = new ValueInput({value: 42});
 
 // use setValue to set the value after creation :
-vi.setValue('toto');  // value is now "toto", type: string
+vi.setValue('toto');
 
 // use setDataType to set the widget on a specific data type :
-vi.setDataType('boolean');  // widget is now in boolean input mode
+vi.setDataType('boolean');
 
 // use the 'datatypes' option in the initialization dictionary to restrict
 // possible data types (by default, all data types are allowed) :
 var vi = new ValueInput({datatypes:{
-  'string' : true, // type string is allowed
-  'boolean': true  // type boolean is allowed
-}});               // other types are not allowed
+  'string' : true,  // allowed
+  'boolean': false  // not allowed
+                    // types that are not specified are not allowed
+}});
 
 // use setDataTypes to restrict possible data types after creation :
 vi.setDataTypes({
@@ -67,35 +68,28 @@ vi.setDataTypes({
   'boolean': true
 });
 
+// pass empty dictionary to allow all data types :
+vi.setDataTypes({});
+
 // you can restrict possible data types for the values of arrays and objects :
 vi.setDataTypes({
-  // using `true` means array can contain all datatypes :
-  'array' : true
-  // use a dictionary to restrict data types :
   'array'  : {
-    'number': true, // array can contain numbers
-    'string': true, // array con contain strings
-    'array' : true  // array can contain other arrays
-  },
-  // you can nest restrictions indefinitely :
-  'array'  : {            // top level array can contain numbers and other arrays
     'number': true,
-    'array' : {           // depth 1 arrays can contain strings and other arrays
-      'strings': true,
-      'array'  : {        // depth 2 arrays can contain booleans and other arrays
-        'boolean': true,
-        'array'  : true   // depth 3 arrays can contain any kind of value
-                          // (including other arrays)
-      }
-    }
+    'string': true
   },
-  // same thing applies to objects :
   'object'  : {
-    'number': true
-    'object': {
+    'number': true,
+    'string': true
+  },
+  // it is possible to nest restrictions indefinitely :
+  'array'  : {
+    'number': true,
+    'object' : {
       'strings': true,
-      'objects': true,
-      'array'  : true
+      'array'  : {
+        'boolean': true,
+        'array'  : true // use `true` to allow all data types
+      }
     }
   }
 });
@@ -109,13 +103,11 @@ When widget is collapsed it just displays its current value.
 ```javascript
 // the 'collapse' option can be passed in the initialization
 // dictionary (default is true) :
-var vi = new ValueInput({collapsed: false});  // widget is initially expanded
+var vi = new ValueInput({collapsed: false});
 
-// after creation call setCollapsed or toggleCollapsed to collapse or expand widget :
-vi.setCollapsed(true);  // widget is collapsed
-vi.setCollapsed(false); // widget is expanded
-vi.toggleCollapsed();   // widget is collapsed
-vi.toggleCollapsed();   // widget is expanded
+// call setCollapsed or toggleCollapsed to collapse or expand widget after creation :
+vi.setCollapsed(true);
+vi.toggleCollapsed();
 ```
 
 ## Styling
@@ -133,7 +125,7 @@ Collapsed :
       button.collapsebtn
       span.valuelabel
 
-Not Collapsed :
+Expanded :
 
   span.valueinput.datatype-*
     span.innerwrapper
@@ -177,24 +169,28 @@ Class `datatype-*` can be :
 
 ## Structure
 
-Widget is composed of two main parts : the datatype selector and the value input elements.
+Widget is composed of two main parts : the data type selector and the value input elements.
+Data type selector is a `<select>` tag.
+Input elements are enclosed in a `<span>` with class `.valuewrapper`.
 Each data type has specific input elements :
 - string   : `<input>` tag of type `text`
 - number   : `<input>` tag of type `number`
 - boolean  : `<input>` tag of type `checkbox`
-- array    : multiple ValueInput widgets
-- object   : multiple pair of `<input>` tag of type `text` for the labels and ValueInput widgets for the values
+- array    : multiple ValueInput widgets (see DOM structure)
+- object   : multiple pair of `<input>` tag of type `text` for the labels and ValueInput widgets for the values (see DOM structure)
 - null     : no input
 - undefined: no input
 
 Types array an object form a recursive structure where ValueInput widgets can be nested indefinitely.
+
+Data type can be selected programmatically via the `setDataType` method.
 
 ### Collapsed and expanded
 
 Widget has two mode : collapsed and expanded.
 
 Users can only input value when widget is expanded.
-When collapsed, the datatype selector is removed and the inputs are replaced
+When collapsed, the datatype selector is removed and the input element are replaced
 by a label that displays a textual representation of the current value.
 
 A button allows users to expand or collapse the widget.
@@ -204,12 +200,14 @@ Collapse state can also be set programmatically via the `setCollapsed` or `toggl
 ## Data persistance
 
 The value for each data type is retained when switching to another data type.
-Switching back to a data type reapplies the previous value for that data type.
+Switching back to a data type reapplies the previous value for that data type, if any.
 
 
-## Event
+## Events
 
-The `valuechange` event is fired after the widget's value changes.
+### valuechange
+
+This event is fired after the widget's value changes.
 
 Event object contains the following properties :
 - `oldValue` : value before change
@@ -255,7 +253,7 @@ Use this property to grab the widget to insert it in the DOM tree.
 ### replaceElement(element)
 
 Replace the given DOM element `element` by the widget.
-Widget takes classes and id of replaces element.
+Widget takes classes and id of replaced element.
 
 `element` must have a parent.
 
@@ -291,9 +289,13 @@ A falsy value means the corresponding data type is not allowed.
 For types `array` and `object`, a truthy value means all data types are allowed
 for the values of the array or object.
 
-Value for the types `array` and `object` can be a dictionnary that specifies which data type are allowed.
-This dictionnary has the same structure as the main dictionnary.
-Dictionnaries can be nested indefinitely.
+Value for the types `array` and `object` can be a dictionary that specifies which data type are allowed.
+This dictionary has the same structure as the main dictionary.
+Dictionaries can be nested indefinitely.
+
+If dictionary contains keys that are not valid type identifiers they are ignored.
+If dictionary does not contain any valid type identifier, then all data types are allowed.
+If dictionary contains some valid type identifiers, then types that are not in the dictionary are not allowed.
 
 ### setValue(value)
 
